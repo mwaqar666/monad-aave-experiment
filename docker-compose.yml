@@ -1,0 +1,133 @@
+services:
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 1: PostgreSQL
+  # The database where Ponder stores all indexed events.
+  # ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 2: Redis
+  # The message queue that passes liquidation candidates
+  # from the Watcher to the Simulator to the Executor.
+  # ─────────────────────────────────────────────────────────────
+  redis:
+    image: redis
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 3: Indexer (Ponder)
+  # Listens to Aave events on Monad and writes to PostgreSQL.
+  # ─────────────────────────────────────────────────────────────
+  indexer:
+    build:
+      context: ./indexer
+      dockerfile: Dockerfile
+    container_name: indexer
+    restart: unless-stopped
+    environment:
+      PONDER_RPC_URL: ${PONDER_RPC_URL}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./indexer:/app
+      - /app/node_modules
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 4: Watcher (Optional — enable after we build it)
+  # Reads PostgreSQL, calculates health factors, pushes to Redis.
+  # ─────────────────────────────────────────────────────────────
+  # watcher:
+  #   build:
+  #     context: ./watcher
+  #     dockerfile: Dockerfile
+  #   container_name: watcher
+  #   restart: unless-stopped
+  #   environment:
+  #     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+  #     REDIS_URL: redis://redis:6379
+  #     RPC_URL: ${PONDER_RPC_URL}
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 5: Simulator (Optional — enable after we build it)
+  # Pulls from Redis, runs Anvil fork simulations.
+  # ─────────────────────────────────────────────────────────────
+  # simulator:
+  #   build:
+  #     context: ./simulator
+  #     dockerfile: Dockerfile
+  #   container_name: simulator
+  #   restart: unless-stopped
+  #   environment:
+  #     REDIS_URL: redis://redis:6379
+  #     RPC_URL: ${PONDER_RPC_URL}
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 6: Executor (Optional — enable after we build it)
+  # Pulls approved opportunities from Redis, submits transactions.
+  # ─────────────────────────────────────────────────────────────
+  # executor:
+  #   build:
+  #     context: ./executor
+  #     dockerfile: Dockerfile
+  #   container_name: executor
+  #   restart: unless-stopped
+  #   environment:
+  #     REDIS_URL: redis://redis:6379
+  #     RPC_URL: ${PONDER_RPC_URL}
+  #     PRIVATE_KEY: ${PRIVATE_KEY}
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - monad-net
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  monad-net:
+    driver: bridge
