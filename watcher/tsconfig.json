@@ -1,20 +1,21 @@
 {
   "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+
     // Type checking
     "strict": true,
     "noUncheckedIndexedAccess": true,
 
     // Interop constraints
-    "verbatimModuleSyntax": false,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
 
     // Language and environment
-    "moduleResolution": "bundler",
-    "module": "ESNext",
-    "noEmit": true,
+    "module": "NodeNext",
     "lib": ["ES2022"],
     "target": "ES2022",
 
@@ -37,13 +38,8 @@
     "alwaysStrict": true,
 
     // Skip type checking for node modules
-    "skipLibCheck": true,
-
-    "paths": {
-      "@api": ["./src/api"],
-      "@types": ["./src/types"]
-    }
+    "skipLibCheck": true
   },
   "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

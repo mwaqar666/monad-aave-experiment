@@ -17,9 +17,10 @@ services:
       - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     networks:
       - monad-net
 
@@ -36,11 +37,17 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     networks:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 3: Indexer (Ponder)
+  # SERVICE 3: Indexer
   # Listens to Aave events on Monad and writes to PostgreSQL.
   # ─────────────────────────────────────────────────────────────
   indexer:
@@ -50,8 +57,10 @@ services:
     container_name: indexer
     restart: unless-stopped
     environment:
-      PONDER_RPC_URL: ${PONDER_RPC_URL}
+      RPC_URL: ${RPC_URL}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    ports:
+      - "42069:42069"
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,26 +71,30 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 4: Watcher (Optional — enable after we build it)
+  # SERVICE 4: Watcher
   # Reads PostgreSQL, calculates health factors, pushes to Redis.
   # ─────────────────────────────────────────────────────────────
-  # watcher:
-  #   build:
-  #     context: ./watcher
-  #     dockerfile: Dockerfile
-  #   container_name: watcher
-  #   restart: unless-stopped
-  #   environment:
-  #     DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-  #     REDIS_URL: redis://redis:6379
-  #     RPC_URL: ${PONDER_RPC_URL}
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - monad-net
+  watcher:
+    build:
+      context: ./watcher
+      dockerfile: Dockerfile
+    container_name: watcher
+    restart: unless-stopped
+    environment:
+      RPC_URL: ${RPC_URL}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      POLL_INTERVAL: 5000
+      HF_THRESHOLD: 0.95
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - /app/node_modules
+    networks:
+      - monad-net
 
   # ─────────────────────────────────────────────────────────────
   # SERVICE 5: Simulator (Optional — enable after we build it)
@@ -95,7 +108,7 @@ services:
   #   restart: unless-stopped
   #   environment:
   #     REDIS_URL: redis://redis:6379
-  #     RPC_URL: ${PONDER_RPC_URL}
+  #     RPC_URL: ${RPC_URL}
   #   depends_on:
   #     redis:
   #       condition: service_healthy
@@ -114,7 +127,7 @@ services:
   #   restart: unless-stopped
   #   environment:
   #     REDIS_URL: redis://redis:6379
-  #     RPC_URL: ${PONDER_RPC_URL}
+  #     RPC_URL: ${RPC_URL}
   #     PRIVATE_KEY: ${PRIVATE_KEY}
   #   depends_on:
   #     redis:

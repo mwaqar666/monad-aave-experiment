@@ -1,21 +1,38 @@
 import { createConfig } from "ponder";
 import { http } from "viem";
+import { AaveV3Monad } from "@aave-dao/aave-address-book";
 
 import { AavePoolV3Abi } from "./abis/AavePoolV3";
 
+const getEnvVar = (name: string, defaultVal?: string): string => {
+  const value = process.env[name];
+
+  if (!value && defaultVal) return defaultVal;
+
+  if (!value) throw new Error(`Environment variable [${name}] is not set`);
+
+  return value;
+};
+
+const RPC_URL = getEnvVar("RPC_URL");
+const DATABASE_URL = getEnvVar("DATABASE_URL");
+
 export default createConfig({
+  database: {
+    kind: "postgres",
+    connectionString: DATABASE_URL,
+  },
   chains: {
     monad: {
       id: 1,
-      rpc: http(process.env.PONDER_RPC_URL),
+      rpc: http(RPC_URL),
     },
   },
   contracts: {
     AavePoolV3: {
       chain: "monad",
       abi: AavePoolV3Abi,
-      // address: "0x0000000000000000000000000000000000000000",
-      address: "0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef",
+      address: AaveV3Monad.POOL,
       startBlock: "latest",
     },
   },

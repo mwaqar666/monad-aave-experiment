@@ -1,0 +1,6 @@
+﻿#,Component,Layman Role,Technical Role
+**1**,**Indexer**,"""The Ears""","A background service that listens to every `Supply`, `Borrow`, `Withdraw`, `Repay`, and `LiquidationCall` event on Aave V3.7 on Monad. It builds and maintains a local database of every user's position."
+**2**,**Watcher**,"""The Brain""","A high-frequency polling service that reads the Indexer's database, fetches live oracle prices from Chainlink, and calculates each position's **Health Factor** in real time. It flags positions with HF < 1.0 as ""liquidatable."""
+**3**,**Simulator**,"""The Sandbox""","Before spending a single cent on gas, this component spins up a local Monad fork, simulates the `liquidationCall()` transaction, and confirms the **exact profit** after gas, flash-loan fees, and swap slippage."
+**4**,**Executor**,"""The Muscle""","A smart contract + transaction builder that receives the green light from the Simulator, constructs the atomic liquidation transaction (flash loan → repay debt → seize collateral → swap → repay flash loan), and broadcasts it to the Monad network."
+**5**,**Manager**,"""The Operator""","A dashboard and control plane that shows live PnL, liquidation history, gas costs, and at-risk positions. It also handles circuit breakers (auto-shutoff if 3 failures in a row), gas price thresholds, and capital rebalancing."

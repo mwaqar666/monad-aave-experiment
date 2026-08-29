@@ -8,7 +8,7 @@ export const AavePoolV3Abi = [
       { name: "user", type: "address", indexed: false },
       { name: "onBehalfOf", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
-      { name: "referralCode", type: "uint16", indexed: false },
+      { name: "referralCode", type: "uint16", indexed: true },
     ],
   },
   {
@@ -16,7 +16,7 @@ export const AavePoolV3Abi = [
     type: "event",
     inputs: [
       { name: "reserve", type: "address", indexed: true },
-      { name: "user", type: "address", indexed: false },
+      { name: "user", type: "address", indexed: true },
       { name: "to", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
     ],
@@ -31,7 +31,7 @@ export const AavePoolV3Abi = [
       { name: "amount", type: "uint256", indexed: false },
       { name: "interestRateMode", type: "uint8", indexed: false },
       { name: "borrowRate", type: "uint256", indexed: false },
-      { name: "referralCode", type: "uint16", indexed: false },
+      { name: "referralCode", type: "uint16", indexed: true },
     ],
   },
   {
@@ -39,7 +39,7 @@ export const AavePoolV3Abi = [
     type: "event",
     inputs: [
       { name: "reserve", type: "address", indexed: true },
-      { name: "user", type: "address", indexed: false },
+      { name: "user", type: "address", indexed: true },
       { name: "repayer", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
       { name: "useATokens", type: "bool", indexed: false },
@@ -68,21 +68,6 @@ export const AavePoolV3Abi = [
       { name: "variableBorrowRate", type: "uint256", indexed: false },
       { name: "liquidityIndex", type: "uint256", indexed: false },
       { name: "variableBorrowIndex", type: "uint256", indexed: false },
-    ],
-  },
-  // View function we may need later
-  {
-    name: "getUserAccountData",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "user", type: "address" }],
-    outputs: [
-      { name: "totalCollateralBase", type: "uint256" },
-      { name: "totalDebtBase", type: "uint256" },
-      { name: "availableBorrowsBase", type: "uint256" },
-      { name: "currentLiquidationThreshold", type: "uint256" },
-      { name: "ltv", type: "uint256" },
-      { name: "healthFactor", type: "uint256" },
     ],
   },
 ] as const;

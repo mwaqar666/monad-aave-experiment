@@ -1,0 +1,396 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type ViewPageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  accountSchema(id: String!): AccountSchema
+  accountSchemas(where: AccountSchemaFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int, offset: Int): AccountSchemaPage!
+  positionSchema(id: String!): PositionSchema
+  positionSchemas(where: PositionSchemaFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int, offset: Int): PositionSchemaPage!
+  reserveDataSchema(id: String!): ReserveDataSchema
+  reserveDataSchemas(where: ReserveDataSchemaFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int, offset: Int): ReserveDataSchemaPage!
+  liquidationEventSchema(id: String!): LiquidationEventSchema
+  liquidationEventSchemas(where: LiquidationEventSchemaFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int, offset: Int): LiquidationEventSchemaPage!
+  _meta: Meta
+}
+
+type AccountSchema {
+  id: String!
+  firstSeenBlock: BigInt!
+  lastSeenBlock: BigInt!
+  hasBorrowed: Boolean!
+  isActive: Boolean!
+}
+
+type AccountSchemaPage {
+  items: [AccountSchema!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input AccountSchemaFilter {
+  AND: [AccountSchemaFilter]
+  OR: [AccountSchemaFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  firstSeenBlock: BigInt
+  firstSeenBlock_not: BigInt
+  firstSeenBlock_in: [BigInt]
+  firstSeenBlock_not_in: [BigInt]
+  firstSeenBlock_gt: BigInt
+  firstSeenBlock_lt: BigInt
+  firstSeenBlock_gte: BigInt
+  firstSeenBlock_lte: BigInt
+  lastSeenBlock: BigInt
+  lastSeenBlock_not: BigInt
+  lastSeenBlock_in: [BigInt]
+  lastSeenBlock_not_in: [BigInt]
+  lastSeenBlock_gt: BigInt
+  lastSeenBlock_lt: BigInt
+  lastSeenBlock_gte: BigInt
+  lastSeenBlock_lte: BigInt
+  hasBorrowed: Boolean
+  hasBorrowed_not: Boolean
+  hasBorrowed_in: [Boolean]
+  hasBorrowed_not_in: [Boolean]
+  isActive: Boolean
+  isActive_not: Boolean
+  isActive_in: [Boolean]
+  isActive_not_in: [Boolean]
+}
+
+type PositionSchema {
+  id: String!
+  user: String!
+  asset: String!
+  firstSeenBlock: BigInt!
+  lastSeenBlock: BigInt!
+  hasCollateral: Boolean!
+  hasDebt: Boolean!
+  isActive: Boolean!
+}
+
+type PositionSchemaPage {
+  items: [PositionSchema!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input PositionSchemaFilter {
+  AND: [PositionSchemaFilter]
+  OR: [PositionSchemaFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  id_contains_nocase: String
+  id_not_contains_nocase: String
+  id_starts_with_nocase: String
+  id_ends_with_nocase: String
+  id_not_starts_with_nocase: String
+  id_not_ends_with_nocase: String
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  asset: String
+  asset_not: String
+  asset_in: [String]
+  asset_not_in: [String]
+  asset_contains: String
+  asset_not_contains: String
+  asset_starts_with: String
+  asset_ends_with: String
+  asset_not_starts_with: String
+  asset_not_ends_with: String
+  firstSeenBlock: BigInt
+  firstSeenBlock_not: BigInt
+  firstSeenBlock_in: [BigInt]
+  firstSeenBlock_not_in: [BigInt]
+  firstSeenBlock_gt: BigInt
+  firstSeenBlock_lt: BigInt
+  firstSeenBlock_gte: BigInt
+  firstSeenBlock_lte: BigInt
+  lastSeenBlock: BigInt
+  lastSeenBlock_not: BigInt
+  lastSeenBlock_in: [BigInt]
+  lastSeenBlock_not_in: [BigInt]
+  lastSeenBlock_gt: BigInt
+  lastSeenBlock_lt: BigInt
+  lastSeenBlock_gte: BigInt
+  lastSeenBlock_lte: BigInt
+  hasCollateral: Boolean
+  hasCollateral_not: Boolean
+  hasCollateral_in: [Boolean]
+  hasCollateral_not_in: [Boolean]
+  hasDebt: Boolean
+  hasDebt_not: Boolean
+  hasDebt_in: [Boolean]
+  hasDebt_not_in: [Boolean]
+  isActive: Boolean
+  isActive_not: Boolean
+  isActive_in: [Boolean]
+  isActive_not_in: [Boolean]
+}
+
+type ReserveDataSchema {
+  id: String!
+  asset: String!
+  liquidityRate: BigInt!
+  variableBorrowRate: BigInt!
+  liquidityIndex: BigInt!
+  variableBorrowIndex: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+
+type ReserveDataSchemaPage {
+  items: [ReserveDataSchema!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ReserveDataSchemaFilter {
+  AND: [ReserveDataSchemaFilter]
+  OR: [ReserveDataSchemaFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  id_contains_nocase: String
+  id_not_contains_nocase: String
+  id_starts_with_nocase: String
+  id_ends_with_nocase: String
+  id_not_starts_with_nocase: String
+  id_not_ends_with_nocase: String
+  asset: String
+  asset_not: String
+  asset_in: [String]
+  asset_not_in: [String]
+  asset_contains: String
+  asset_not_contains: String
+  asset_starts_with: String
+  asset_ends_with: String
+  asset_not_starts_with: String
+  asset_not_ends_with: String
+  liquidityRate: BigInt
+  liquidityRate_not: BigInt
+  liquidityRate_in: [BigInt]
+  liquidityRate_not_in: [BigInt]
+  liquidityRate_gt: BigInt
+  liquidityRate_lt: BigInt
+  liquidityRate_gte: BigInt
+  liquidityRate_lte: BigInt
+  variableBorrowRate: BigInt
+  variableBorrowRate_not: BigInt
+  variableBorrowRate_in: [BigInt]
+  variableBorrowRate_not_in: [BigInt]
+  variableBorrowRate_gt: BigInt
+  variableBorrowRate_lt: BigInt
+  variableBorrowRate_gte: BigInt
+  variableBorrowRate_lte: BigInt
+  liquidityIndex: BigInt
+  liquidityIndex_not: BigInt
+  liquidityIndex_in: [BigInt]
+  liquidityIndex_not_in: [BigInt]
+  liquidityIndex_gt: BigInt
+  liquidityIndex_lt: BigInt
+  liquidityIndex_gte: BigInt
+  liquidityIndex_lte: BigInt
+  variableBorrowIndex: BigInt
+  variableBorrowIndex_not: BigInt
+  variableBorrowIndex_in: [BigInt]
+  variableBorrowIndex_not_in: [BigInt]
+  variableBorrowIndex_gt: BigInt
+  variableBorrowIndex_lt: BigInt
+  variableBorrowIndex_gte: BigInt
+  variableBorrowIndex_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+}
+
+type LiquidationEventSchema {
+  id: String!
+  collateralAsset: String!
+  debtAsset: String!
+  user: String!
+  liquidator: String!
+  debtToCover: BigInt!
+  liquidatedCollateralAmount: BigInt!
+  receiveAToken: Boolean!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type LiquidationEventSchemaPage {
+  items: [LiquidationEventSchema!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input LiquidationEventSchemaFilter {
+  AND: [LiquidationEventSchemaFilter]
+  OR: [LiquidationEventSchemaFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  id_contains_nocase: String
+  id_not_contains_nocase: String
+  id_starts_with_nocase: String
+  id_ends_with_nocase: String
+  id_not_starts_with_nocase: String
+  id_not_ends_with_nocase: String
+  collateralAsset: String
+  collateralAsset_not: String
+  collateralAsset_in: [String]
+  collateralAsset_not_in: [String]
+  collateralAsset_contains: String
+  collateralAsset_not_contains: String
+  collateralAsset_starts_with: String
+  collateralAsset_ends_with: String
+  collateralAsset_not_starts_with: String
+  collateralAsset_not_ends_with: String
+  debtAsset: String
+  debtAsset_not: String
+  debtAsset_in: [String]
+  debtAsset_not_in: [String]
+  debtAsset_contains: String
+  debtAsset_not_contains: String
+  debtAsset_starts_with: String
+  debtAsset_ends_with: String
+  debtAsset_not_starts_with: String
+  debtAsset_not_ends_with: String
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  liquidator: String
+  liquidator_not: String
+  liquidator_in: [String]
+  liquidator_not_in: [String]
+  liquidator_contains: String
+  liquidator_not_contains: String
+  liquidator_starts_with: String
+  liquidator_ends_with: String
+  liquidator_not_starts_with: String
+  liquidator_not_ends_with: String
+  debtToCover: BigInt
+  debtToCover_not: BigInt
+  debtToCover_in: [BigInt]
+  debtToCover_not_in: [BigInt]
+  debtToCover_gt: BigInt
+  debtToCover_lt: BigInt
+  debtToCover_gte: BigInt
+  debtToCover_lte: BigInt
+  liquidatedCollateralAmount: BigInt
+  liquidatedCollateralAmount_not: BigInt
+  liquidatedCollateralAmount_in: [BigInt]
+  liquidatedCollateralAmount_not_in: [BigInt]
+  liquidatedCollateralAmount_gt: BigInt
+  liquidatedCollateralAmount_lt: BigInt
+  liquidatedCollateralAmount_gte: BigInt
+  liquidatedCollateralAmount_lte: BigInt
+  receiveAToken: Boolean
+  receiveAToken_not: Boolean
+  receiveAToken_in: [Boolean]
+  receiveAToken_not_in: [Boolean]
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+}

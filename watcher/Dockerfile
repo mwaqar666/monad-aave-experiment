@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -15,8 +15,8 @@ RUN pnpm install --frozen-lockfile || pnpm install
 # Copy source
 COPY . .
 
-# Expose Ponder dev port (optional)
-EXPOSE 42069
+# Build the TypeScript code
+RUN pnpm run build
 
-# Start Ponder in dev mode
-CMD ["pnpm", "run", "dev"]
+# Start
+CMD ["pnpm", "start"]
