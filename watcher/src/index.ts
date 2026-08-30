@@ -85,7 +85,7 @@ async function checkBorrowers() {
   const startTime = Date.now();
 
   // 1. Fetch all borrowers from PostgreSQL
-  const result = await pgPool.query<{ id: `0x${string}` }>(`SELECT id FROM account WHERE has_borrowed = true AND is_active = true`);
+  const result = await pgPool.query<{ id: AbiTypeToPrimitiveType<"address"> }>(`SELECT id FROM account WHERE has_borrowed = true AND is_active = true`);
 
   const borrowers = result.rows;
   console.log(`[SCAN] Checking ${borrowers.length} borrowers...`);

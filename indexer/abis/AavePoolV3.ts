@@ -70,4 +70,12 @@ export const AavePoolV3Abi = [
       { name: "variableBorrowIndex", type: "uint256", indexed: false },
     ],
   },
+  {
+    name: "UserEModeSet",
+    type: "event",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "categoryId", type: "uint8", indexed: false },
+    ],
+  },
 ] as const;
