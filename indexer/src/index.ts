@@ -1,105 +1,303 @@
-// indexer/src/index.ts^
 import { ponder } from "ponder:registry";
-import { account, position, reserveData, liquidationEvent } from "ponder:schema";
+import { account, position, liquidationRecord, marketReserve } from "ponder:schema";
 
-// ─────────────────────────────────────────────────────────────
-// EVENT: Supply
-// Someone deposited collateral. Record the user and asset.
+const PROTOCOL_AAVE_V3 = "aave_v3";
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePoolV3:Supply", async ({ event, context }) => {
+  const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
-  const asset = event.args.reserve;
-  const blockNumber = event.block.number;
+  const market = event.args.reserve;
 
-  await account.upsertAccount(context.db, user, blockNumber);
-  await position.upsertPosition(context.db, user, asset, blockNumber, { hasCollateral: true });
+  // 1. Ensure parent account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 2. Mark this asset position as collateral for the account
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId: accountId,
+      marketId: market,
+      isCollateral: true,
+    })
+    .onConflictDoUpdate({
+      isCollateral: true,
+    });
 });
 
-// ─────────────────────────────────────────────────────────────
-// EVENT: Withdraw
-// Someone removed collateral. Record the activity.
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePoolV3:Withdraw", async ({ event, context }) => {
+  const chainId = context.chain.id;
   const user = event.args.user;
-  const asset = event.args.reserve;
-  const blockNumber = event.block.number;
+  const market = event.args.reserve;
 
-  await account.upsertAccount(context.db, user, blockNumber);
-  await position.upsertPosition(context.db, user, asset, blockNumber);
+  // 1. Ensure parent account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 2. Ensure position entry exists
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId,
+      marketId: market,
+    })
+    .onConflictDoNothing();
 });
 
-// ─────────────────────────────────────────────────────────────
-// EVENT: Borrow
-// Someone took out a loan. THIS IS CRITICAL.
-// Mark them as a borrower — the Watcher will check their health factor.
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePoolV3:Borrow", async ({ event, context }) => {
+  const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
-  const asset = event.args.reserve;
-  const blockNumber = event.block.number;
+  const market = event.args.reserve;
 
-  await account.upsertAccount(context.db, user, blockNumber, { hasBorrowed: true });
-  await position.upsertPosition(context.db, user, asset, blockNumber, { hasDebt: true });
+  // 1. Mark account as an active borrower
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+      hasBorrowed: true,
+    })
+    .onConflictDoUpdate({
+      hasBorrowed: true,
+    });
+
+  // 2. Mark this asset position as active debt
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId,
+      marketId: market,
+      isDebt: true,
+    })
+    .onConflictDoUpdate({
+      isDebt: true,
+    });
 });
 
-// ─────────────────────────────────────────────────────────────
-// EVENT: Repay
-// Someone paid back debt. Record the activity.
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePoolV3:Repay", async ({ event, context }) => {
+  const chainId = context.chain.id;
   const user = event.args.user;
-  const asset = event.args.reserve;
-  const blockNumber = event.block.number;
+  const market = event.args.reserve;
 
-  await account.upsertAccount(context.db, user, blockNumber);
-  await position.upsertPosition(context.db, user, asset, blockNumber);
+  // 1. Ensure parent account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 2. Ensure position entry exists
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId,
+      marketId: market,
+    })
+    .onConflictDoNothing();
 });
 
 // ─────────────────────────────────────────────────────────────
-// EVENT: LiquidationCall
-// Someone got liquidated. Record everything for analytics.
-// Also update the victim's position.
+ponder.on("AavePoolV3:ReserveUsedAsCollateralEnabled", async ({ event, context }) => {
+  const chainId = context.chain.id;
+  const user = event.args.user;
+  const market = event.args.reserve;
+
+  // 1. Ensure parent account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 2. Explicitly enable collateral
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId,
+      marketId: market,
+      isCollateral: true,
+    })
+    .onConflictDoUpdate({
+      isCollateral: true,
+    });
+});
+
+// ─────────────────────────────────────────────────────────────
+ponder.on("AavePoolV3:ReserveUsedAsCollateralDisabled", async ({ event, context }) => {
+  const chainId = context.chain.id;
+  const user = event.args.user;
+  const market = event.args.reserve;
+
+  // 1. Ensure parent account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 2. Explicitly disable collateral
+  const positionId = `${accountId}:${market}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: positionId,
+      accountId,
+      marketId: market,
+      isCollateral: false,
+    })
+    .onConflictDoUpdate({
+      isCollateral: false,
+    });
+});
+
+// ─────────────────────────────────────────────────────────────
+ponder.on("AavePoolV3:UserEModeSet", async ({ event, context }) => {
+  const chainId = context.chain.id;
+  const user = event.args.user;
+  const categoryId = +event.args.categoryId;
+
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+      eModeCategoryId: categoryId,
+    })
+    .onConflictDoUpdate({
+      eModeCategoryId: categoryId,
+    });
+});
+
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePoolV3:LiquidationCall", async ({ event, context }) => {
+  const chainId = context.chain.id;
   const user = event.args.user;
   const collateralAsset = event.args.collateralAsset;
   const debtAsset = event.args.debtAsset;
-  const blockNumber = event.block.number;
+  const txHash = event.transaction.hash;
+  const logIndex = event.log.logIndex;
 
-  // Record the liquidation event
-  const liquidationEventId = `${event.transaction.hash}_${event.log.logIndex}`;
-  await liquidationEvent.insertLiquidationEvent(context.db, liquidationEventId, {
+  // 1. Record historical liquidation execution
+  const recordId = `${chainId}:${txHash}:${logIndex}`;
+  await context.db.insert(liquidationRecord).values({
+    id: recordId,
+    chainId,
+    protocol: PROTOCOL_AAVE_V3,
+    txHash,
+    logIndex,
     collateralAsset,
     debtAsset,
-    user,
-    liquidator: event.args.liquidator,
-    debtToCover: event.args.debtToCover,
-    liquidatedCollateralAmount: event.args.liquidatedCollateralAmount,
+    userAddress: user,
+    liquidatorAddress: event.args.liquidator,
+    debtCoveredAmount: event.args.debtToCover,
+    collateralLiquidatedAmount: event.args.liquidatedCollateralAmount,
     receiveAToken: event.args.receiveAToken,
-    blockNumber,
-    timestamp: event.block.timestamp,
-    txHash: event.transaction.hash,
-  });
-
-  // Update the victim's account and positions
-  await account.upsertAccount(context.db, user, blockNumber);
-  await position.upsertPosition(context.db, user, collateralAsset, blockNumber);
-  await position.upsertPosition(context.db, user, debtAsset, blockNumber);
-});
-
-// ─────────────────────────────────────────────────────────────
-// EVENT: ReserveDataUpdated
-// Interest rates changed. Track for analytics.
-// ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:ReserveDataUpdated", async ({ event, context }) => {
-  const reserveDataId = `${event.args.reserve}_${event.block.number}`;
-  await reserveData.insertReserveData(context.db, reserveDataId, {
-    asset: event.args.reserve,
-    liquidityRate: event.args.liquidityRate,
-    variableBorrowRate: event.args.variableBorrowRate,
-    liquidityIndex: event.args.liquidityIndex,
-    variableBorrowIndex: event.args.variableBorrowIndex,
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
   });
+
+  // 2. Ensure borrower account exists
+  const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
+  await context.db
+    .insert(account)
+    .values({
+      id: accountId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      userAddress: user,
+    })
+    .onConflictDoNothing();
+
+  // 3. Ensure collateral position exist
+  const collateralPositionId = `${accountId}:${collateralAsset}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: collateralPositionId,
+      accountId,
+      marketId: collateralAsset,
+    })
+    .onConflictDoNothing();
+
+  // 4. Ensure debt position exist
+  const debtPositionId = `${accountId}:${debtAsset}`;
+  await context.db
+    .insert(position)
+    .values({
+      id: debtPositionId,
+      accountId,
+      marketId: debtAsset,
+    })
+    .onConflictDoNothing();
+});
+
+// ─────────────────────────────────────────────────────────────
+ponder.on("AavePoolV3:ReserveDataUpdated", async ({ event, context }) => {
+  const chainId = context.chain.id;
+  const market = event.args.reserve;
+  const liquidityIndex = event.args.liquidityIndex;
+  const variableBorrowIndex = event.args.variableBorrowIndex;
+
+  const reserveId = `${chainId}:${PROTOCOL_AAVE_V3}:${market}`;
+  await context.db
+    .insert(marketReserve)
+    .values({
+      id: reserveId,
+      chainId,
+      protocol: PROTOCOL_AAVE_V3,
+      marketId: market,
+      liquidityIndex,
+      variableBorrowIndex,
+    })
+    .onConflictDoUpdate({ liquidityIndex, variableBorrowIndex });
 });

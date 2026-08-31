@@ -46,6 +46,30 @@ export const AavePoolV3Abi = [
     ],
   },
   {
+    name: "ReserveUsedAsCollateralEnabled",
+    type: "event",
+    inputs: [
+      { name: "reserve", type: "address", indexed: true },
+      { name: "user", type: "address", indexed: true },
+    ],
+  },
+  {
+    name: "ReserveUsedAsCollateralDisabled",
+    type: "event",
+    inputs: [
+      { name: "reserve", type: "address", indexed: true },
+      { name: "user", type: "address", indexed: true },
+    ],
+  },
+  {
+    name: "UserEModeSet",
+    type: "event",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "categoryId", type: "uint8", indexed: false },
+    ],
+  },
+  {
     name: "LiquidationCall",
     type: "event",
     inputs: [
@@ -68,14 +92,6 @@ export const AavePoolV3Abi = [
       { name: "variableBorrowRate", type: "uint256", indexed: false },
       { name: "liquidityIndex", type: "uint256", indexed: false },
       { name: "variableBorrowIndex", type: "uint256", indexed: false },
-    ],
-  },
-  {
-    name: "UserEModeSet",
-    type: "event",
-    inputs: [
-      { name: "user", type: "address", indexed: true },
-      { name: "categoryId", type: "uint8", indexed: false },
     ],
   },
 ] as const;
