@@ -2,7 +2,7 @@ import { createConfig } from "ponder";
 import { http } from "viem";
 import { AaveV3Arbitrum, AaveV3Base, AaveV3Ethereum, AaveV3Monad, AaveV3Optimism, AaveV3Polygon } from "@aave-dao/aave-address-book";
 
-import { AavePoolV3Abi } from "./abis/AavePoolV3";
+import { AavePoolAbi } from "@abis";
 
 const getEnvVar = (name: string, defaultVal?: string): string => {
   const value = process.env[name];
@@ -37,8 +37,8 @@ export default createConfig({
     optimism: { id: 10, rpc: http(RPC_URL_OPTIMISM) },
   },
   contracts: {
-    AavePoolV3: {
-      abi: AavePoolV3Abi,
+    AavePool: {
+      abi: AavePoolAbi,
       chain: {
         mainnet: { address: AaveV3Ethereum.POOL, startBlock: "latest" },
         polygon: { address: AaveV3Polygon.POOL, startBlock: "latest" },

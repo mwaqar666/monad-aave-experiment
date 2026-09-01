@@ -3,7 +3,7 @@ import { account, position, liquidationRecord, marketReserve } from "ponder:sche
 
 const PROTOCOL_AAVE_V3 = "aave_v3";
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:Supply", async ({ event, context }) => {
+ponder.on("AavePool:Supply", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
   const market = event.args.reserve;
@@ -36,7 +36,7 @@ ponder.on("AavePoolV3:Supply", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:Withdraw", async ({ event, context }) => {
+ponder.on("AavePool:Withdraw", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const market = event.args.reserve;
@@ -66,7 +66,7 @@ ponder.on("AavePoolV3:Withdraw", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:Borrow", async ({ event, context }) => {
+ponder.on("AavePool:Borrow", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
   const market = event.args.reserve;
@@ -102,7 +102,7 @@ ponder.on("AavePoolV3:Borrow", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:Repay", async ({ event, context }) => {
+ponder.on("AavePool:Repay", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const market = event.args.reserve;
@@ -132,7 +132,7 @@ ponder.on("AavePoolV3:Repay", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:ReserveUsedAsCollateralEnabled", async ({ event, context }) => {
+ponder.on("AavePool:ReserveUsedAsCollateralEnabled", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const market = event.args.reserve;
@@ -165,7 +165,7 @@ ponder.on("AavePoolV3:ReserveUsedAsCollateralEnabled", async ({ event, context }
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:ReserveUsedAsCollateralDisabled", async ({ event, context }) => {
+ponder.on("AavePool:ReserveUsedAsCollateralDisabled", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const market = event.args.reserve;
@@ -198,7 +198,7 @@ ponder.on("AavePoolV3:ReserveUsedAsCollateralDisabled", async ({ event, context 
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:UserEModeSet", async ({ event, context }) => {
+ponder.on("AavePool:UserEModeSet", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const categoryId = +event.args.categoryId;
@@ -219,7 +219,7 @@ ponder.on("AavePoolV3:UserEModeSet", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:LiquidationCall", async ({ event, context }) => {
+ponder.on("AavePool:LiquidationCall", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
   const collateralAsset = event.args.collateralAsset;
@@ -282,7 +282,7 @@ ponder.on("AavePoolV3:LiquidationCall", async ({ event, context }) => {
 });
 
 // ─────────────────────────────────────────────────────────────
-ponder.on("AavePoolV3:ReserveDataUpdated", async ({ event, context }) => {
+ponder.on("AavePool:ReserveDataUpdated", async ({ event, context }) => {
   const chainId = context.chain.id;
   const market = event.args.reserve;
   const liquidityIndex = event.args.liquidityIndex;

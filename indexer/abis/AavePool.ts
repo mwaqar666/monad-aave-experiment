@@ -1,4 +1,4 @@
-export const AavePoolV3Abi = [
+export const AavePoolAbi = [
   // Events we track
   {
     name: "Supply",
