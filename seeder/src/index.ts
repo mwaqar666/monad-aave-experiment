@@ -3,7 +3,7 @@ import { AaveV3Ethereum, AaveV3Polygon, AaveV3Base, AaveV3Monad, AaveV3Arbitrum,
 import { drizzle } from "drizzle-orm/node-postgres";
 
 import { AavePoolDataProviderAbi, AaveOracleAbi, AavePoolEModeAbi } from "@abis";
-import { emodeCategory, marketReserve } from "../ponder.schema";
+import { emodeCategory, marketReserve } from "@db";
 
 const getEnvVar = (name: string, defaultVal?: string): string => {
   const value = process.env[name];

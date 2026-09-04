@@ -40,12 +40,12 @@ export default createConfig({
     AavePool: {
       abi: AavePoolAbi,
       chain: {
-        mainnet: { address: AaveV3Ethereum.POOL, startBlock: "latest" },
-        polygon: { address: AaveV3Polygon.POOL, startBlock: "latest" },
-        base: { address: AaveV3Base.POOL, startBlock: "latest" },
-        monad: { address: AaveV3Monad.POOL, startBlock: "latest" },
-        arbitrum: { address: AaveV3Arbitrum.POOL, startBlock: "latest" },
-        optimism: { address: AaveV3Optimism.POOL, startBlock: "latest" },
+        mainnet: { address: AaveV3Ethereum.POOL, startBlock: 25897147 },
+        polygon: { address: AaveV3Polygon.POOL, startBlock: 93158918 },
+        base: { address: AaveV3Base.POOL, startBlock: 50827151 },
+        monad: { address: AaveV3Monad.POOL, startBlock: 101631748 },
+        arbitrum: { address: AaveV3Arbitrum.POOL, startBlock: 501340240 },
+        optimism: { address: AaveV3Optimism.POOL, startBlock: 156422436 },
       },
     },
   },

@@ -64,13 +64,13 @@ services:
       RPC_URL_ARBITRUM: ${RPC_URL_ARBITRUM}
       RPC_URL_OPTIMISM: ${RPC_URL_OPTIMISM}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
     ports:
       - "42069:42069"
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - ./indexer:/app
       - /app/node_modules
     networks:
       - monad-net

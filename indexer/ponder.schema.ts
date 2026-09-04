@@ -77,7 +77,7 @@ export const liquidationRecord = onchainTable("liquidation_record", (t) => ({
  * ─────────────────────────────────────────────────────────────
  */
 export const marketReserve = onchainTable("market_reserve", (t) => ({
-  id: t.text().notNull(), // Format: `${chainId}:${protocol}:${marketId}`
+  id: t.text().primaryKey(), // Format: `${chainId}:${protocol}:${marketId}`
   chainId: t.integer().notNull(),
   protocol: t.text().notNull(),
   marketId: t.hex().notNull(), // Underlying token address

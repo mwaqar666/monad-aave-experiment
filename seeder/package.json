@@ -1,7 +1,7 @@
 {
-  "name": "watcher",
+  "name": "seeder",
   "version": "0.0.1",
-  "description": "Watcher",
+  "description": "Seeder",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@aave-dao/aave-address-book": "^4.66.3",
+    "drizzle-orm": "1.0.0-rc.4",
     "pg": "^8.23.0",
-    "redis": "^6.2.1",
-    "viem": "^2.56.0"
+    "viem": "^2.56.3"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",

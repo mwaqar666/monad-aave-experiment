@@ -1,10 +1,8 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type Address } from "viem";
 import { monad } from "viem/chains";
 import { AaveV3Monad } from "@aave-dao/aave-address-book";
 import { Pool } from "pg";
 import { createClient } from "redis";
-
-import type { AbiTypeToPrimitiveType } from "abitype";
 
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION
@@ -68,7 +66,7 @@ interface IPushToQueueData {
   currentLiquidationThreshold: number;
 }
 
-async function pushToQueue(user: AbiTypeToPrimitiveType<"address">, data: IPushToQueueData) {
+async function pushToQueue(user: Address, data: IPushToQueueData) {
   const payload = JSON.stringify({
     user,
     ...data,
@@ -85,7 +83,7 @@ async function checkBorrowers() {
   const startTime = Date.now();
 
   // 1. Fetch all borrowers from PostgreSQL
-  const result = await pgPool.query<{ id: AbiTypeToPrimitiveType<"address"> }>(`SELECT id FROM account WHERE has_borrowed = true AND is_active = true`);
+  const result = await pgPool.query<{ id: Address }>(`SELECT id FROM account WHERE has_borrowed = true AND is_active = true`);
 
   const borrowers = result.rows;
   console.log(`[SCAN] Checking ${borrowers.length} borrowers...`);
