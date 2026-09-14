@@ -5,18 +5,33 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package manifests
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy root workspace config
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-# Install dependencies with pnpm
-# --frozen-lockfile ensures reproducible builds if lockfile exists
-RUN pnpm install --frozen-lockfile || pnpm install
+# Copy shared packages manifests (for workspace resolution)
+COPY packages/abis/package.json packages/abis/package.json
+COPY packages/core/package.json packages/core/package.json
 
-# Copy source
-COPY . .
+# Copy this service's manifest
+COPY watcher/package.json watcher/
 
-# Build the TypeScript code
-RUN pnpm run build
+# Install dependencies from the root
+RUN pnpm install --frozen-lockfile --filter watcher || pnpm install --filter watcher
 
-# Start
+# Copy shared packages source (watcher depends on abis + core)
+COPY packages/abis/ packages/abis/
+COPY packages/core/ packages/core/
+
+# Build shared packages
+RUN pnpm --filter @packages/abis run build
+RUN pnpm --filter @packages/core run build
+
+# Copy this service's source
+COPY watcher/ watcher/
+
+# Build the service
+RUN pnpm --filter watcher run build
+
+# Start from the watcher directory
+WORKDIR /app/watcher
 CMD ["pnpm", "start"]

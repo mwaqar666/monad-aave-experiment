@@ -8,14 +8,17 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@aave-dao/aave-address-book": "^4.66.3",
+    "@packages/abis": "workspace:^",
+    "@packages/core": "workspace:^",
+    "@packages/db": "workspace:^",
     "drizzle-orm": "1.0.0-rc.4",
     "pg": "^8.23.0",
-    "viem": "^2.56.3"
+    "viem": "^2.56.5"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
+    "@types/node": "^26.5.1",
     "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^7.0.2"
   }
 }

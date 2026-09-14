@@ -4,6 +4,7 @@ import { onchainTable, relations } from "ponder";
  * ─────────────────────────────────────────────────────────────
  * Table: account
  * Tracks distinct users per chain and protocol instance.
+ * Owned by the indexer (populated from chain events).
  * ─────────────────────────────────────────────────────────────
  */
 export const account = onchainTable("account", (t) => ({
@@ -19,6 +20,7 @@ export const account = onchainTable("account", (t) => ({
  * ─────────────────────────────────────────────────────────────
  * Table: position
  * Specific asset exposure (collateral/debt) tied to an account.
+ * Owned by the indexer (populated from chain events).
  * ─────────────────────────────────────────────────────────────
  */
 export const position = onchainTable("position", (t) => ({
@@ -31,26 +33,9 @@ export const position = onchainTable("position", (t) => ({
 
 /**
  * ─────────────────────────────────────────────────────────────
- * Table: emode_category
- * Aave v3 E-Mode category configurations.
- * ─────────────────────────────────────────────────────────────
- */
-export const emodeCategory = onchainTable("emode_category", (t) => ({
-  id: t.text().primaryKey(), // Format: `${chainId}:${protocol}:${categoryId}`
-  chainId: t.integer().notNull(),
-  protocol: t.text().notNull(),
-  categoryId: t.integer().notNull(),
-  ltvBps: t.integer().notNull().default(0),
-  liquidationThresholdBps: t.integer().notNull().default(0),
-  liquidationBonusBps: t.integer().notNull().default(0),
-  oracleAddress: t.hex().notNull().default("0x0000000000000000000000000000000000000000"),
-  label: t.text().notNull().default(""),
-}));
-
-/**
- * ─────────────────────────────────────────────────────────────
  * Table: liquidation_record
  * Records all executed liquidations across monitored protocols.
+ * Owned by the indexer (populated from LiquidationCall events).
  * ─────────────────────────────────────────────────────────────
  */
 export const liquidationRecord = onchainTable("liquidation_record", (t) => ({
@@ -72,25 +57,18 @@ export const liquidationRecord = onchainTable("liquidation_record", (t) => ({
 
 /**
  * ─────────────────────────────────────────────────────────────
- * Table: market_reserve
- * Static configuration, risk parameters, and indexes per market.
+ * Table: reserve_index
+ * Real-time liquidity/borrow indexes updated by ReserveDataUpdated events.
+ * Owned by the indexer (separate from static market_metadata owned by seeder).
  * ─────────────────────────────────────────────────────────────
  */
-export const marketReserve = onchainTable("market_reserve", (t) => ({
+export const reserveIndex = onchainTable("reserve_index", (t) => ({
   id: t.text().primaryKey(), // Format: `${chainId}:${protocol}:${marketId}`
   chainId: t.integer().notNull(),
   protocol: t.text().notNull(),
-  marketId: t.hex().notNull(), // Underlying token address
-  assetSymbol: t.text().notNull().default(""),
-  decimals: t.integer().notNull().default(18),
-  oracleAddress: t.hex().notNull().default("0x0000000000000000000000000000000000000000"),
-  liquidationThresholdBps: t.integer().notNull().default(0),
-  liquidationBonusBps: t.integer().notNull().default(0),
+  marketId: t.hex().notNull(),
   liquidityIndex: t.bigint().notNull().default(0n),
   variableBorrowIndex: t.bigint().notNull().default(0n),
-  usageAsCollateralEnabled: t.boolean().notNull().default(true),
-  isActive: t.boolean().notNull().default(true),
-  isFrozen: t.boolean().notNull().default(false),
 }));
 
 /**

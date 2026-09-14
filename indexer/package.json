@@ -14,17 +14,17 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@aave-dao/aave-address-book": "^4.66.3",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.13.5",
-    "ponder": "^0.17.8",
+    "@packages/abis": "workspace:^",
+    "@packages/core": "workspace:^",
+    "hono": "^4.13.7",
+    "ponder": "^0.17.10",
     "postgres": "^3.4.9",
-    "viem": "2.56.0"
+    "viem": "^2.56.5"
   },
   "devDependencies": {
-    "@types/node": "^26.4.0",
-    "eslint": "^10.9.1",
-    "eslint-config-ponder": "^0.17.8",
+    "@types/node": "^26.5.1",
+    "eslint": "^10.10.0",
+    "eslint-config-ponder": "^0.17.10",
     "typescript": "^7.0.2"
   }
 }

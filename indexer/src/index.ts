@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { account, position, liquidationRecord, marketReserve } from "ponder:schema";
+import { account, position, liquidationRecord, reserveIndex } from "ponder:schema";
 
 const PROTOCOL_AAVE_V3 = "aave_v3";
 // ─────────────────────────────────────────────────────────────
@@ -288,11 +288,11 @@ ponder.on("AavePool:ReserveDataUpdated", async ({ event, context }) => {
   const liquidityIndex = event.args.liquidityIndex;
   const variableBorrowIndex = event.args.variableBorrowIndex;
 
-  const reserveId = `${chainId}:${PROTOCOL_AAVE_V3}:${market}`;
+  const indexId = `${chainId}:${PROTOCOL_AAVE_V3}:${market}`;
   await context.db
-    .insert(marketReserve)
+    .insert(reserveIndex)
     .values({
-      id: reserveId,
+      id: indexId,
       chainId,
       protocol: PROTOCOL_AAVE_V3,
       marketId: market,

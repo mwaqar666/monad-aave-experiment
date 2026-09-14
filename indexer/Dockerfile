@@ -5,18 +5,25 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package manifests
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy root workspace config + pnpm lock
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-# Install dependencies with pnpm
-# --frozen-lockfile ensures reproducible builds if lockfile exists
-RUN pnpm install --frozen-lockfile || pnpm install
+# Copy @packages/core manifest (indexer's only shared-package dependency)
+COPY packages/core/package.json packages/core/package.json
 
-# Copy source
-COPY . .
+# Copy this service's manifest
+COPY indexer/package.json indexer/
 
-# Expose Ponder dev port (optional)
-EXPOSE 42069
+# Install dependencies from the root
+RUN pnpm install --frozen-lockfile --filter indexer || pnpm install --filter indexer
 
-# Start Ponder in dev mode
+# Copy @packages/core source and build it
+COPY packages/core/ packages/core/
+RUN pnpm --filter @packages/core run build
+
+# Copy this service's source
+COPY indexer/ indexer/
+
+# Start from the indexer directory
+WORKDIR /app/indexer
 CMD ["pnpm", "run", "start"]

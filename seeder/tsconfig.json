@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
 
     // Type checking
@@ -15,7 +15,8 @@
     "resolveJsonModule": true,
 
     // Language and environment
-    "module": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "target": "ES2022",
 
@@ -38,14 +39,9 @@
     "alwaysStrict": true,
 
     // Skip type checking for node modules
-    "skipLibCheck": true,
-
-    "paths": {
-      "@abis": ["./src/abis/index.ts"],
-      "@db": ["./src/db/index.ts"],
-      "@db/*": ["./src/db/*"]
-    }
+    "skipLibCheck": true
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "drizzle"],
+  "references": [{ "path": "../packages/abis" }, { "path": "../packages/core" }, { "path": "../packages/db" }]
 }

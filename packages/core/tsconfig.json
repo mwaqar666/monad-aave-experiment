@@ -1,26 +1,22 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-
-    // Type checking
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-
-    // Interop constraints
-    "verbatimModuleSyntax": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-
-    // Language and environment
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
     "target": "ES2022",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
 
-    // Code quality
+    // Code Quality
+    "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -36,12 +32,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "alwaysStrict": true,
-
-    // Skip type checking for node modules
-    "skipLibCheck": true
+    "alwaysStrict": true
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../packages/abis" }, { "path": "../packages/core" }]
+  "include": ["src/**/*.ts"]
 }

@@ -52,8 +52,8 @@ services:
   # ─────────────────────────────────────────────────────────────
   indexer:
     build:
-      context: ./indexer
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: indexer/Dockerfile
     container_name: indexer
     restart: unless-stopped
     environment:
@@ -76,13 +76,40 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 4: Watcher
+  # SERVICE 4: Seeder
+  # Seeds the database with historical events from the chains.
+  # ─────────────────────────────────────────────────────────────
+  seeder:
+    build:
+      context: .
+      dockerfile: seeder/Dockerfile
+    container_name: seeder
+    restart: unless-stopped
+    environment:
+      RPC_URL_MAINNET: ${RPC_URL_MAINNET}
+      RPC_URL_POLYGON: ${RPC_URL_POLYGON}
+      RPC_URL_BASE: ${RPC_URL_BASE}
+      RPC_URL_MONAD: ${RPC_URL_MONAD}
+      RPC_URL_ARBITRUM: ${RPC_URL_ARBITRUM}
+      RPC_URL_OPTIMISM: ${RPC_URL_OPTIMISM}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /app/node_modules
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 5: Watcher
   # Reads PostgreSQL, calculates health factors, pushes to Redis.
   # ─────────────────────────────────────────────────────────────
   watcher:
     build:
-      context: ./watcher
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: watcher/Dockerfile
     container_name: watcher
     restart: unless-stopped
     environment:
@@ -107,13 +134,13 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 5: Simulator (Optional — enable after we build it)
+  # SERVICE 6: Simulator (Optional — enable after we build it)
   # Pulls from Redis, runs Anvil fork simulations.
   # ─────────────────────────────────────────────────────────────
   simulator:
     build:
-      context: ./simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: simulator/Dockerfile
     container_name: simulator
     restart: unless-stopped
     environment:
@@ -133,7 +160,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 6: Executor (Optional — enable after we build it)
+  # SERVICE 7: Executor (Optional — enable after we build it)
   # Pulls approved opportunities from Redis, submits transactions.
   # ─────────────────────────────────────────────────────────────
   # executor:

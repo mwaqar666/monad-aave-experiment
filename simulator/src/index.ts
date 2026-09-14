@@ -1,60 +1,16 @@
 import { createPublicClient, createTestClient, http, publicActions, walletActions, parseEther } from "viem";
 import { createClient } from "redis";
 import { monad } from "viem/chains";
-import { AaveV3Monad } from "@aave-dao/aave-address-book";
-import type { AbiTypeToPrimitiveType } from "abitype";
+
+import { AavePoolAbi } from "@packages/abis";
+import { env, Chains, Chain } from "@packages/core";
 
 // ─────────────────────────────────────────────────────────────
 // CONFIGURATION
 // ─────────────────────────────────────────────────────────────
-
-const getEnvVar = (name: string, defaultVal?: string): string => {
-  const value = process.env[name];
-
-  if (!value && defaultVal) return defaultVal;
-
-  if (!value) throw new Error(`Environment variable [${name}] is not set`);
-
-  return value;
-};
-
-const RPC_URL = getEnvVar("RPC_URL", "https://rpc.monad.xyz");
-const REDIS_URL = getEnvVar("REDIS_URL", "redis://localhost:6379");
-const MIN_PROFIT_USD = Number(getEnvVar("MIN_PROFIT_USD", "10")); // Minimum $10 profit to proceed
-const POLL_INTERVAL = Number(getEnvVar("POLL_INTERVAL", "2000"));
-
-const FLASH_LOAN_PROVIDER = "0x794a61358D6845594F94dc1DB02A252b5b4814aD"; // Aave Pool on most chains
-
-// Minimal ABI for liquidation
-const poolAbi = [
-  {
-    name: "liquidationCall",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "collateralAsset", type: "address" },
-      { name: "debtAsset", type: "address" },
-      { name: "borrower", type: "address" },
-      { name: "debtToCover", type: "uint256" },
-      { name: "receiveAToken", type: "bool" },
-    ],
-    outputs: [],
-  },
-  {
-    name: "getUserAccountData",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "user", type: "address" }],
-    outputs: [
-      { name: "totalCollateralBase", type: "uint256" },
-      { name: "totalDebtBase", type: "uint256" },
-      { name: "availableBorrowsBase", type: "uint256" },
-      { name: "currentLiquidationThreshold", type: "uint256" },
-      { name: "ltv", type: "uint256" },
-      { name: "healthFactor", type: "uint256" },
-    ],
-  },
-] as const;
+const REDIS_URL = env("REDIS_URL", "redis://localhost:6379");
+const MIN_PROFIT_USD = Number(env("MIN_PROFIT_USD", "10")); // Minimum $10 profit to proceed
+const POLL_INTERVAL = Number(env("POLL_INTERVAL", "2000"));
 
 // ─────────────────────────────────────────────────────────────
 // CLIENTS
@@ -63,7 +19,7 @@ const redisClient = createClient({ url: REDIS_URL });
 
 const publicClient = createPublicClient({
   chain: monad,
-  transport: http(RPC_URL),
+  transport: http(Chains[Chain.Monad].rpcUrl),
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -71,7 +27,7 @@ const publicClient = createPublicClient({
 // ─────────────────────────────────────────────────────────────
 
 interface ICandidateData {
-  user: AbiTypeToPrimitiveType<"address">;
+  user: `0x${string}`;
   totalCollateralBase: number;
   totalDebtBase: number;
   healthFactor: number;
@@ -91,7 +47,7 @@ async function simulateLiquidation(candidate: ICandidateData): Promise<{ profita
   const testClient = createTestClient({
     chain: monad,
     mode: "anvil",
-    transport: http(RPC_URL),
+    transport: http(Chains[Chain.Monad].rpcUrl),
   })
     .extend(publicActions)
     .extend(walletActions);
@@ -108,8 +64,8 @@ async function simulateLiquidation(candidate: ICandidateData): Promise<{ profita
 
     // Get fresh user data on the fork
     const userData = await testClient.readContract({
-      address: AaveV3Monad.POOL,
-      abi: poolAbi,
+      address: Chains[Chain.Monad].addresses.pool,
+      abi: AavePoolAbi,
       functionName: "getUserAccountData",
       args: [candidate.user],
     });
@@ -135,8 +91,8 @@ async function simulateLiquidation(candidate: ICandidateData): Promise<{ profita
     // 3. Exact gas estimation
 
     const gasEstimate = await testClient.estimateContractGas({
-      address: AaveV3Monad.POOL,
-      abi: poolAbi,
+      address: Chains[Chain.Monad].addresses.pool,
+      abi: AavePoolAbi,
       functionName: "liquidationCall",
       args: [
         "0x0000000000000000000000000000000000000000" as `0x${string}`, // collateralAsset - need to fetch from position
@@ -199,7 +155,7 @@ async function processCandidates() {
 
 async function main() {
   console.log("[SIMULATOR] Starting Aave Liquidation Simulator...");
-  console.log(`[SIMULATOR] RPC: ${RPC_URL}`);
+  console.log(`[SIMULATOR] RPC: ${Chains[Chain.Monad].rpcUrl}`);
   console.log(`[SIMULATOR] Min profit: $${MIN_PROFIT_USD}`);
   console.log(`[SIMULATOR] Redis: ${REDIS_URL}`);
 

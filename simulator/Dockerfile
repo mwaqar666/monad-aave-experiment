@@ -5,18 +5,21 @@ WORKDIR /app
 # Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package manifests
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Copy root workspace config
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 
-# Install dependencies with pnpm
-# --frozen-lockfile ensures reproducible builds if lockfile exists
-RUN pnpm install --frozen-lockfile || pnpm install
+# Copy this service's manifest (simulator has no @packages dependency)
+COPY simulator/package.json simulator/
 
-# Copy source
-COPY . .
+# Install dependencies
+RUN pnpm install --frozen-lockfile --filter simulator || pnpm install --filter simulator
 
-# Build the TypeScript code
-RUN pnpm run build
+# Copy this service's source
+COPY simulator/ simulator/
 
-# Start
+# Build the service
+RUN pnpm --filter simulator run build
+
+# Start from the simulator directory
+WORKDIR /app/simulator
 CMD ["pnpm", "start"]

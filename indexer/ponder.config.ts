@@ -1,51 +1,32 @@
 import { createConfig } from "ponder";
 import { http } from "viem";
-import { AaveV3Arbitrum, AaveV3Base, AaveV3Ethereum, AaveV3Monad, AaveV3Optimism, AaveV3Polygon } from "@aave-dao/aave-address-book";
 
-import { AavePoolAbi } from "@abis";
-
-const getEnvVar = (name: string, defaultVal?: string): string => {
-  const value = process.env[name];
-
-  if (!value && defaultVal) return defaultVal;
-
-  if (!value) throw new Error(`Environment variable [${name}] is not set`);
-
-  return value;
-};
-
-const RPC_URL_MAINNET = getEnvVar("RPC_URL_MAINNET");
-const RPC_URL_POLYGON = getEnvVar("RPC_URL_POLYGON");
-const RPC_URL_BASE = getEnvVar("RPC_URL_BASE");
-const RPC_URL_MONAD = getEnvVar("RPC_URL_MONAD");
-const RPC_URL_ARBITRUM = getEnvVar("RPC_URL_ARBITRUM");
-const RPC_URL_OPTIMISM = getEnvVar("RPC_URL_OPTIMISM");
-
-const DATABASE_URL = getEnvVar("DATABASE_URL");
+import { AavePoolAbi } from "@packages/abis";
+import { Chain, Chains, env } from "@packages/core";
 
 export default createConfig({
   database: {
     kind: "postgres",
-    connectionString: DATABASE_URL,
+    connectionString: env("DATABASE_URL"),
   },
   chains: {
-    mainnet: { id: 1, rpc: http(RPC_URL_MAINNET) },
-    polygon: { id: 137, rpc: http(RPC_URL_POLYGON) },
-    base: { id: 8453, rpc: http(RPC_URL_BASE) },
-    monad: { id: 143, rpc: http(RPC_URL_MONAD) },
-    arbitrum: { id: 42161, rpc: http(RPC_URL_ARBITRUM) },
-    optimism: { id: 10, rpc: http(RPC_URL_OPTIMISM) },
+    ethereum: { id: Chain.Ethereum, rpc: http(Chains[Chain.Ethereum].rpcUrl) },
+    polygon: { id: Chain.Polygon, rpc: http(Chains[Chain.Polygon].rpcUrl) },
+    base: { id: Chain.Base, rpc: http(Chains[Chain.Base].rpcUrl) },
+    monad: { id: Chain.Monad, rpc: http(Chains[Chain.Monad].rpcUrl) },
+    arbitrum: { id: Chain.Arbitrum, rpc: http(Chains[Chain.Arbitrum].rpcUrl) },
+    optimism: { id: Chain.Optimism, rpc: http(Chains[Chain.Optimism].rpcUrl) },
   },
   contracts: {
     AavePool: {
       abi: AavePoolAbi,
       chain: {
-        mainnet: { address: AaveV3Ethereum.POOL, startBlock: 25897147 },
-        polygon: { address: AaveV3Polygon.POOL, startBlock: 93158918 },
-        base: { address: AaveV3Base.POOL, startBlock: 50827151 },
-        monad: { address: AaveV3Monad.POOL, startBlock: 101631748 },
-        arbitrum: { address: AaveV3Arbitrum.POOL, startBlock: 501340240 },
-        optimism: { address: AaveV3Optimism.POOL, startBlock: 156422436 },
+        ethereum: { address: Chains[Chain.Ethereum].addresses.pool, startBlock: 25897147 },
+        polygon: { address: Chains[Chain.Polygon].addresses.pool, startBlock: 93158918 },
+        base: { address: Chains[Chain.Base].addresses.pool, startBlock: 50827151 },
+        monad: { address: Chains[Chain.Monad].addresses.pool, startBlock: 101631748 },
+        arbitrum: { address: Chains[Chain.Arbitrum].addresses.pool, startBlock: 501340240 },
+        optimism: { address: Chains[Chain.Optimism].addresses.pool, startBlock: 156422436 },
       },
     },
   },

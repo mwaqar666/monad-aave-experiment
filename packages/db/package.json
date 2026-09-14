@@ -1,0 +1,25 @@
+{
+  "name": "@packages/db",
+  "version": "0.0.1",
+  "description": "Shared Drizzle schema for static market metadata tables (owned by seeder)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "drizzle-orm": "1.0.0-rc.4"
+  },
+  "devDependencies": {
+    "drizzle-orm": "1.0.0-rc.4",
+    "typescript": "^7.0.2"
+  }
+}
