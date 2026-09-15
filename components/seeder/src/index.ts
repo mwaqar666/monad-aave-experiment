@@ -8,6 +8,9 @@ import { marketMetadata, emodeCategoryMetadata } from "@packages/db";
 async function seedMetadata() {
   const dbConnectionString = env("DATABASE_URL");
   const db = drizzle(dbConnectionString);
+  const db = drizzle({
+    client
+  });
 
   console.log("=== Starting Static Market Metadata Seeding ===");
 

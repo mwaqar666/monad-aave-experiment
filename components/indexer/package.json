@@ -14,17 +14,16 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@packages/abis": "workspace:^",
-    "@packages/core": "workspace:^",
+    "@packages/abis": "workspace:*",
+    "@packages/core": "workspace:*",
     "hono": "^4.13.7",
     "ponder": "^0.17.10",
     "postgres": "^3.4.9",
     "viem": "^2.56.5"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
+    "typescript": "catalog:devDependencies",
     "eslint": "^10.10.0",
-    "eslint-config-ponder": "^0.17.10",
-    "typescript": "^7.0.2"
+    "eslint-config-ponder": "^0.17.10"
   }
 }

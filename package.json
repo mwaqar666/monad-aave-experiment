@@ -1,17 +1,32 @@
 {
-  "name": "monad-aave-experiment",
-  "version": "0.0.1",
+  "name": "aave-experiment",
   "private": true,
-  "description": "Monorepo for Aave liquidation bot across 6 chains",
-  "type": "module",
+  "workspaces": {
+    "packages": [
+      "packages/*",
+      "components/*"
+    ],
+    "catalogs": {
+      "devDependencies": {
+        "@types/bun": "^1.4.2",
+        "@types/node": "^26.5.1",
+        "typescript": "^7"
+      }
+    }
+  },
   "scripts": {
-    "build:packages": "pnpm --filter @packages/abis run build && pnpm --filter @packages/core run build && pnpm --filter @packages/db run build",
-    "build:seeder": "pnpm build:packages && pnpm --filter seeder run build",
-    "build:watcher": "pnpm build:packages && pnpm --filter watcher run build",
-    "build:simulator": "pnpm build:packages && pnpm --filter simulator run build",
-    "build:all": "pnpm build:seeder && pnpm build:watcher && pnpm build:simulator",
-    "start:seeder": "pnpm build:seeder && pnpm --filter seeder run start",
-    "start:watcher": "pnpm build:watcher && pnpm --filter watcher run start",
-    "start:simulator": "pnpm build:simulator && pnpm --filter simulator run start"
+    "build:package:abis": "bun --filter @packages/abis build",
+    "build:package:core": "bun --filter @packages/core build",
+    "build:package:db": "bun --filter @packages/db build",
+    "build:packages": "bun run build:package:abis && bun run build:package:core && bun run build:package:db",
+    "build:component:seeder": "bun --filter seeder build",
+    "build:component:watcher": "bun --filter watcher build",
+    "build:component:simulator": "bun --filter simulator build",
+    "build:components": "bun run build:component:seeder && bun run build:component:watcher && bun run build:component:simulator",
+    "build:all": "bun run build:packages && bun run build:components",
+    "start:indexer": "bun --filter indexer dev",
+    "start:seeder": "bun run build:component:seeder && bun --filter seeder start",
+    "start:watcher": "bun run build:component:watcher && bun --filter watcher start",
+    "start:simulator": "bun run build:component:simulator && bun --filter simulator start"
   }
 }

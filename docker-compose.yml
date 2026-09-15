@@ -47,7 +47,34 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 3: Indexer
+  # SERVICE 3: Seeder
+  # Seeds the database with historical events from the chains.
+  # ─────────────────────────────────────────────────────────────
+  seeder:
+    build:
+      context: .
+      dockerfile: seeder/Dockerfile
+    container_name: seeder
+    restart: unless-stopped
+    environment:
+      RPC_URL_MAINNET: ${RPC_URL_MAINNET}
+      RPC_URL_POLYGON: ${RPC_URL_POLYGON}
+      RPC_URL_BASE: ${RPC_URL_BASE}
+      RPC_URL_MONAD: ${RPC_URL_MONAD}
+      RPC_URL_ARBITRUM: ${RPC_URL_ARBITRUM}
+      RPC_URL_OPTIMISM: ${RPC_URL_OPTIMISM}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /app/node_modules
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 4: Indexer
   # Listens to Aave events on Monad and writes to PostgreSQL.
   # ─────────────────────────────────────────────────────────────
   indexer:
@@ -67,33 +94,6 @@ services:
       DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
     ports:
       - "42069:42069"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - /app/node_modules
-    networks:
-      - monad-net
-
-  # ─────────────────────────────────────────────────────────────
-  # SERVICE 4: Seeder
-  # Seeds the database with historical events from the chains.
-  # ─────────────────────────────────────────────────────────────
-  seeder:
-    build:
-      context: .
-      dockerfile: seeder/Dockerfile
-    container_name: seeder
-    restart: unless-stopped
-    environment:
-      RPC_URL_MAINNET: ${RPC_URL_MAINNET}
-      RPC_URL_POLYGON: ${RPC_URL_POLYGON}
-      RPC_URL_BASE: ${RPC_URL_BASE}
-      RPC_URL_MONAD: ${RPC_URL_MONAD}
-      RPC_URL_ARBITRUM: ${RPC_URL_ARBITRUM}
-      RPC_URL_OPTIMISM: ${RPC_URL_OPTIMISM}
-      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
     depends_on:
       postgres:
         condition: service_healthy

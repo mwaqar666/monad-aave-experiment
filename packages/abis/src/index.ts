@@ -1,5 +1,5 @@
-export { AaveOracleAbi } from "./AaveOracle.js";
-export { AavePoolEModeAbi } from "./AavePoolEMode.js";
-export { AavePoolDataProviderAbi } from "./AavePoolDataProvider.js";
-export { AavePoolAbi } from "./AavePool.js";
-export { AavePoolAddressProviderAbi } from "./AavePoolAddressProvider.js";
+export { AaveOracleAbi } from "./AaveOracle.ts";
+export { AavePoolEModeAbi } from "./AavePoolEMode.ts";
+export { AavePoolDataProviderAbi } from "./AavePoolDataProvider.ts";
+export { AavePoolAbi } from "./AavePool.ts";
+export { AavePoolAddressProviderAbi } from "./AavePoolAddressProvider.ts";

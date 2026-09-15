@@ -3,7 +3,7 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN wget -qO- https://get.pnpm.io/install.sh | env ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -
 
 # Copy root workspace config
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./

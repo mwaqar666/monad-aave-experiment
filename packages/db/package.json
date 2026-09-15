@@ -5,21 +5,16 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "build": "bun run build.ts"
   },
   "peerDependencies": {
     "drizzle-orm": "1.0.0-rc.4"
   },
   "devDependencies": {
-    "drizzle-orm": "1.0.0-rc.4",
-    "typescript": "^7.0.2"
+    "@types/bun": "catalog:devDependencies",
+    "@types/node": "catalog:devDependencies",
+    "typescript": "catalog:devDependencies",
+    "drizzle-orm": "1.0.0-rc.4"
   }
 }

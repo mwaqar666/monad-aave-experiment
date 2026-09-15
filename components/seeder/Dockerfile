@@ -3,7 +3,8 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN wget -qO- https://get.pnpm.io/install.sh | env ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
+RUN source /root/.shrc
 
 # Copy root workspace config
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
@@ -20,7 +21,9 @@ COPY seeder/package.json seeder/
 RUN pnpm install --frozen-lockfile --filter seeder || pnpm install --filter seeder
 
 # Copy all shared packages source (seeder depends on abis + core + db)
-COPY packages/ packages/
+COPY packages/abis/ packages/abis/
+COPY packages/core/ packages/core/
+COPY packages/db/ packages/db/
 
 # Build shared packages (ordered: abis has no deps, core depends on nothing in monorepo, db depends on nothing)
 RUN pnpm --filter @packages/abis run build

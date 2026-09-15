@@ -12,8 +12,8 @@ import type { Chain, IChainConfig } from "@packages/core";
 
 const DATABASE_URL = env("DATABASE_URL");
 const REDIS_URL = env("REDIS_URL");
-const POLL_INTERVAL_MS = Number(process.env["POLL_INTERVAL"] ?? "5000");
-const HF_THRESHOLD = Number(process.env["HF_THRESHOLD"] ?? "1.0");
+const POLL_INTERVAL_MS = parseInt(env("POLL_INTERVAL"));
+const HF_THRESHOLD = parseInt(env("HF_THRESHOLD"));
 
 // ─────────────────────────────────────────────────────────────
 // CLIENTS

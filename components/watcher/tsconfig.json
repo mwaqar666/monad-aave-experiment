@@ -16,6 +16,7 @@
 
     // Language and environment
     "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022"],
     "target": "ES2022",
 

@@ -1,7 +1,7 @@
 {
-  "name": "seeder",
+  "name": "simulator",
   "version": "0.0.1",
-  "description": "Seeder",
+  "description": "Simulator",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -10,15 +10,10 @@
   "dependencies": {
     "@packages/abis": "workspace:^",
     "@packages/core": "workspace:^",
-    "@packages/db": "workspace:^",
-    "drizzle-orm": "1.0.0-rc.4",
-    "pg": "^8.23.0",
+    "redis": "^6.2.1",
     "viem": "^2.56.5"
   },
   "devDependencies": {
-    "@types/node": "^26.5.1",
-    "@types/pg": "^8.23.1",
-    "drizzle-kit": "^0.31.10",
-    "typescript": "^7.0.2"
+    "typescript": "catalog:devDependencies"
   }
 }

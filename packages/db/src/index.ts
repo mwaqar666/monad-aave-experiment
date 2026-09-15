@@ -1,1 +1,1 @@
-export { marketMetadata, emodeCategoryMetadata } from "./schema.js";
+export { marketMetadata, emodeCategoryMetadata } from "./schema.ts";

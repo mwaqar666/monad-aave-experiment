@@ -1,9 +1,10 @@
-FROM node:22-alpine
-
-WORKDIR /app
+# use the official Bun image
+# see all versions at https://hub.docker.com/r/oven/bun/tags
+FROM oven/bun:1 AS base
+WORKDIR /usr/src/app
 
 # Install pnpm globally
-RUN npm install -g pnpm
+RUN wget -qO- https://get.pnpm.io/install.sh | env ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -
 
 # Copy root workspace config + pnpm lock
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
