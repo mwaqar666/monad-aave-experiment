@@ -43,5 +43,4 @@
   },
   "include": ["./**/*.ts"],
   "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../packages/abis" }, { "path": "../packages/core" }]
 }

@@ -25,8 +25,8 @@
     "build:components": "bun run build:component:seeder && bun run build:component:watcher && bun run build:component:simulator",
     "build:all": "bun run build:packages && bun run build:components",
     "start:indexer": "bun --filter indexer dev",
-    "start:seeder": "bun run build:component:seeder && bun --filter seeder start",
-    "start:watcher": "bun run build:component:watcher && bun --filter watcher start",
-    "start:simulator": "bun run build:component:simulator && bun --filter simulator start"
+    "start:seeder": "bun --filter seeder start",
+    "start:watcher": "bun run components/watcher/dist/index.js",
+    "start:simulator": "bun run components/simulator/dist/index.js"
   }
 }

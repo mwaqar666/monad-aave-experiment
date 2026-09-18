@@ -1,24 +1,17 @@
-import { createPublicClient, http, type Address } from "viem";
-import { drizzle } from "drizzle-orm/node-postgres";
+import { createPublicClient, http } from "viem";
 
 import { AavePoolDataProviderAbi, AaveOracleAbi, AavePoolEModeAbi } from "@packages/abis";
-import { PROTOCOL_AAVE_V3, CANONICAL_MULTICALL3, env, Chains } from "@packages/core";
-import { marketMetadata, emodeCategoryMetadata } from "@packages/db";
+import { PROTOCOL_AAVE_V3, Chains, type Address } from "@packages/core";
+import { database, marketMetadata, emodeCategoryMetadata } from "@packages/db";
 
 async function seedMetadata() {
-  const dbConnectionString = env("DATABASE_URL");
-  const db = drizzle(dbConnectionString);
-  const db = drizzle({
-    client
-  });
-
   console.log("=== Starting Static Market Metadata Seeding ===");
 
   try {
-    for (const [chainId, chainConfig] of Object.entries(Chains)) {
-      console.log(`\nProcessing chain: ${chainConfig.name} (ChainID: ${chainId})`);
+    for (const chainConfig of Object.values(Chains)) {
+      console.log(`\nProcessing chain: ${chainConfig.chain.name} (ChainID: ${chainConfig.chain.id})`);
 
-      const publicClient = createPublicClient({ transport: http(chainConfig.rpcUrl) });
+      const publicClient = createPublicClient({ chain: chainConfig.chain, transport: http() });
 
       // 1. Fetch all listed reserve tokens dynamically
       const rawReserves = await publicClient.readContract({
@@ -30,7 +23,7 @@ async function seedMetadata() {
       console.log(`Discovered ${rawReserves.length} reserve markets.`);
 
       if (rawReserves.length === 0) {
-        console.warn(`No reserves returned for ${chainConfig.name}. Skipping...`);
+        console.warn(`No reserves returned for ${chainConfig.chain.name}. Skipping...`);
         continue;
       }
 
@@ -53,13 +46,13 @@ async function seedMetadata() {
       const multicallResults = await publicClient.multicall({
         contracts: reserveCalls,
         allowFailure: false,
-        multicallAddress: CANONICAL_MULTICALL3,
+        multicallAddress: chainConfig.chain.contracts.multicall3.address,
       });
 
       // 3. Process and write market metadata to PostgreSQL
       for (let i = 0; i < rawReserves.length; i++) {
         const reserve = rawReserves[i];
-        if (!reserve) throw new Error(`Reserve data missing for index ${i} on chain ${chainConfig.name}`);
+        if (!reserve) throw new Error(`Reserve data missing for index ${i} on chain ${chainConfig.chain.name}`);
 
         const tokenAddress = reserve.tokenAddress;
         const configData = multicallResults[i * 2] as [
@@ -77,13 +70,13 @@ async function seedMetadata() {
 
         const oracleAddress = multicallResults[i * 2 + 1] as Address;
 
-        const reserveId = `${chainId}:${PROTOCOL_AAVE_V3}:${tokenAddress}`;
+        const reserveId = `${chainConfig.chain.id}:${PROTOCOL_AAVE_V3}:${tokenAddress}`;
 
-        await db
+        await database()
           .insert(marketMetadata)
           .values({
             id: reserveId,
-            chainId: parseInt(chainId),
+            chainId: chainConfig.chain.id,
             protocol: PROTOCOL_AAVE_V3,
             marketId: tokenAddress,
             assetSymbol: reserve.symbol,
@@ -124,7 +117,7 @@ async function seedMetadata() {
       const eModeResults = await publicClient.multicall({
         contracts: eModeCalls,
         allowFailure: true,
-        multicallAddress: CANONICAL_MULTICALL3,
+        multicallAddress: chainConfig.chain.contracts.multicall3.address,
       });
 
       for (const categoryId of eModeIds) {
@@ -137,13 +130,13 @@ async function seedMetadata() {
         const cat = result.result;
         if (cat.ltv === 0 && cat.liquidationThreshold === 0) continue;
 
-        const catId = `${chainId}:${PROTOCOL_AAVE_V3}:${categoryId}`;
+        const catId = `${chainConfig.chain.id}:${PROTOCOL_AAVE_V3}:${categoryId}`;
 
-        await db
+        await database()
           .insert(emodeCategoryMetadata)
           .values({
             id: catId,
-            chainId: parseInt(chainId),
+            chainId: chainConfig.chain.id,
             protocol: PROTOCOL_AAVE_V3,
             categoryId,
             ltvBps: cat.ltv,

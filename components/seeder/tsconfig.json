@@ -1,47 +1,19 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "outDir": "./dist",
+    "rootDir": "./src",
+    "types": ["node", "bun"],
 
-    // Type checking
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true,
 
-    // Interop constraints
-    "verbatimModuleSyntax": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-
-    // Language and environment
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
-    "target": "ES2022",
-
-    // Code quality
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noErrorTruncation": true,
-    "noImplicitThis": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedSideEffectImports": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strictBindCallApply": true,
-    "strictBuiltinIteratorReturn": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "alwaysStrict": true,
-
-    // Skip type checking for node modules
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true
   },
-  "include": ["./src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "drizzle"],
-  "references": [{ "path": "../packages/abis" }, { "path": "../packages/core" }, { "path": "../packages/db" }]
+  "include": ["src/**/*.ts"]
 }

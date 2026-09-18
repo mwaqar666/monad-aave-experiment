@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { rm } from "node:fs/promises";
 import tsconfigJson from "./tsconfig.json";
 
-const ENRTY_POINT = join(import.meta.dir, "./src/index.ts");
+const ENRTY_POINT = join(import.meta.dir, "src", "index.ts");
 const DIST_DIR = join(import.meta.dir, tsconfigJson.compilerOptions.outDir);
 
 // 1. Clean the old dist folder asynchronously using Bun's recommended API

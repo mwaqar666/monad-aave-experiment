@@ -10,12 +10,13 @@
     "schema:generate": "bun --bun drizzle-kit generate"
   },
   "peerDependencies": {
-    "drizzle-orm": "1.0.0-rc.4"
+    "@packages/core": "workspace:^",
+    "drizzle-orm": "^1.0.0-rc.4"
   },
   "devDependencies": {
     "@types/bun": "catalog:devDependencies",
     "@types/node": "catalog:devDependencies",
-    "typescript": "catalog:devDependencies",
-    "drizzle-orm": "1.0.0-rc.4"
+    "drizzle-kit": "^1.0.0-rc.4",
+    "typescript": "catalog:devDependencies"
   }
 }

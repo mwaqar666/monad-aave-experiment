@@ -1,34 +1,57 @@
-# dependencies (bun install)
-node_modules
-
-# output
-out
-dist
-*.tgz
-
-# code coverage
-coverage
-*.lcov
-
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# caches
-.eslintcache
-.cache
-*.tsbuildinfo
-
-# IntelliJ based IDEs
-.idea
-
-# Finder (MacOS) folder config
+# =================
+# Operating Systems
+# =================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+.prototools
+
+# =================
+# Editors & IDEs
+# =================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.history/
+.idea/
+*.iml
+*.iws
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+
+# =================
+# Logs & Databases
+# =================
+*.log
+logs/
+*.sqlite
+*.sqlite3
+
+# =================
+# Environment & Secrets
+# =================
+.env*
+!.env.example
+secrets.json
+
+# =================
+# Build, Deps & Caches
+# =================
+dist/
+build/
+bin/
+out/
+node_modules/
+.cache/
+.parcel-cache/
+.turbo/
+*.tsbuildinfo

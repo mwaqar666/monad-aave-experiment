@@ -11,6 +11,9 @@
   "dependencies": {
     "@aave-dao/aave-address-book": "^4.67.4"
   },
+  "peerDependencies": {
+    "viem": "^2.56.5"
+  },
   "devDependencies": {
     "@types/bun": "catalog:devDependencies",
     "@types/node": "catalog:devDependencies",

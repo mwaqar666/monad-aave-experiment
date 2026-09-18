@@ -53,9 +53,9 @@ services:
   seeder:
     build:
       context: .
-      dockerfile: seeder/Dockerfile
+      dockerfile: components/seeder/Dockerfile
     container_name: seeder
-    restart: unless-stopped
+    restart: on-failure
     environment:
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
@@ -80,7 +80,7 @@ services:
   indexer:
     build:
       context: .
-      dockerfile: indexer/Dockerfile
+      dockerfile: components/indexer/Dockerfile
     container_name: indexer
     restart: unless-stopped
     environment:
@@ -109,7 +109,7 @@ services:
   watcher:
     build:
       context: .
-      dockerfile: watcher/Dockerfile
+      dockerfile: components/watcher/Dockerfile
     container_name: watcher
     restart: unless-stopped
     environment:
@@ -140,7 +140,7 @@ services:
   simulator:
     build:
       context: .
-      dockerfile: simulator/Dockerfile
+      dockerfile: components/simulator/Dockerfile
     container_name: simulator
     restart: unless-stopped
     environment:

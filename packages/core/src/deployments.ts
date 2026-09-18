@@ -1,58 +1,54 @@
-import { AaveV3Arbitrum, AaveV3Base, AaveV3Ethereum, AaveV3Monad, AaveV3Optimism, AaveV3Polygon } from "@aave-dao/aave-address-book";
+import { mainnet, polygon, base, monad, arbitrum, optimism } from "viem/chains";
+import { AaveV3Ethereum, AaveV3Polygon, AaveV3Base, AaveV3Monad, AaveV3Arbitrum, AaveV3Optimism } from "@aave-dao/aave-address-book";
+
+import { env } from "./utils.ts";
+import type { Address } from "./types.ts";
+
+export type AllChainType = typeof mainnet | typeof polygon | typeof base | typeof monad | typeof arbitrum | typeof optimism;
 
 export interface IChainAddresses {
-  pool: `0x${string}`;
-  oracle: `0x${string}`;
-  poolDataProvider: `0x${string}`;
-  poolAddressesProvider: `0x${string}`;
+  pool: Address;
+  oracle: Address;
+  poolDataProvider: Address;
+  poolAddressesProvider: Address;
 }
 
-export interface IChainConfig {
-  key: string;
-  name: string;
+export interface IChainConfig<ChainKey extends Chain, ChainType extends AllChainType> {
+  key: ChainKey;
+  chain: ChainType;
   rpcUrl: string;
   addresses: IChainAddresses;
 }
 
 export enum Chain {
-  Ethereum = 1,
-  Polygon = 137,
-  Base = 8453,
-  Monad = 143,
-  Arbitrum = 42161,
-  Optimism = 10,
+  Mainnet = "mainnet",
+  Polygon = "polygon",
+  Base = "base",
+  Monad = "monad",
+  Arbitrum = "arbitrum",
+  Optimism = "optimism",
 }
 
-/**
- * The 6 chains we monitor
- */
-export const Chains: Record<Chain, IChainConfig> = {
-  [Chain.Ethereum]: createChainConfig(Chain.Ethereum, "ethereum", "Ethereum", "RPC_URL_MAINNET"),
-  [Chain.Polygon]: createChainConfig(Chain.Polygon, "polygon", "Polygon", "RPC_URL_POLYGON"),
-  [Chain.Base]: createChainConfig(Chain.Base, "base", "Base", "RPC_URL_BASE"),
-  [Chain.Monad]: createChainConfig(Chain.Monad, "monad", "Monad", "RPC_URL_MONAD"),
-  [Chain.Arbitrum]: createChainConfig(Chain.Arbitrum, "arbitrum", "Arbitrum", "RPC_URL_ARBITRUM"),
-  [Chain.Optimism]: createChainConfig(Chain.Optimism, "optimism", "Optimism", "RPC_URL_OPTIMISM"),
+export const Chains = {
+  [Chain.Mainnet]: createChainConfig(Chain.Mainnet, mainnet, "RPC_URL_MAINNET"),
+  [Chain.Polygon]: createChainConfig(Chain.Polygon, polygon, "RPC_URL_POLYGON"),
+  [Chain.Base]: createChainConfig(Chain.Base, base, "RPC_URL_BASE"),
+  [Chain.Monad]: createChainConfig(Chain.Monad, monad, "RPC_URL_MONAD"),
+  [Chain.Arbitrum]: createChainConfig(Chain.Arbitrum, arbitrum, "RPC_URL_ARBITRUM"),
+  [Chain.Optimism]: createChainConfig(Chain.Optimism, optimism, "RPC_URL_OPTIMISM"),
 };
 
-export function env(name: string, defaultVal?: string): string {
-  const value = process.env[name];
-  if (!value && defaultVal) return defaultVal;
-  if (!value) throw new Error(`Environment variable [${name}] is not set`);
-  return value;
-}
-
-export function createChainConfig(chain: Chain, key: string, name: string, rpcEnvVar: string): IChainConfig {
+function createChainConfig<ChainKey extends Chain, ChainType extends AllChainType>(key: ChainKey, chain: ChainType, rpcEnvVar: string): IChainConfig<ChainKey, ChainType> {
   return {
     key: key,
-    name: name,
+    chain: chain,
     rpcUrl: env(rpcEnvVar),
-    addresses: getAddresses(chain),
+    addresses: getAddresses(key),
   };
 }
 
-export function getAddresses(chainId: number): IChainAddresses {
-  const addressBook = getAddressBook(chainId);
+function getAddresses(chain: Chain): IChainAddresses {
+  const addressBook = getAddressBook(chain);
 
   return {
     pool: addressBook.POOL,
@@ -62,21 +58,21 @@ export function getAddresses(chainId: number): IChainAddresses {
   };
 }
 
-export function getAddressBook(chainId: number) {
-  switch (chainId) {
-    case 1:
+function getAddressBook(chain: Chain) {
+  switch (chain) {
+    case Chain.Mainnet:
       return AaveV3Ethereum;
-    case 137:
+    case Chain.Polygon:
       return AaveV3Polygon;
-    case 8453:
+    case Chain.Base:
       return AaveV3Base;
-    case 143:
+    case Chain.Monad:
       return AaveV3Monad;
-    case 42161:
+    case Chain.Arbitrum:
       return AaveV3Arbitrum;
-    case 10:
+    case Chain.Optimism:
       return AaveV3Optimism;
     default:
-      throw new Error(`Unsupported chain ID: ${chainId}`);
+      throw new Error(`Unsupported chain: ${chain}`);
   }
 }

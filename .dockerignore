@@ -1,24 +1,71 @@
-# Dependencies
-.pnpm-store
-node_modules
+# =================
+# Docker
+# =================
+.git
+.git/
+.gitignore
+.dockerignore
+**/Dockerfile
+Docker-compose.yml
+README.md
+LICENSE
+docs/
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Misc
+# =================
+# Operating Systems
+# =================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+.prototools
 
-# Env files
+# =================
+# Editors & IDEs
+# =================
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.history/
+.idea/
+*.iml
+*.iws
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+
+# =================
+# Logs & Databases
+# =================
+*.log
+logs/
+*.sqlite
+*.sqlite3
+
+# =================
+# Environment & Secrets
+# =================
 .env
-.env*.local
+.env.local
+.env.*.local
+secrets.json
 
-# Ponder
-/generated/
-/.ponder/
-
-# Build outputs (shared packages emit to dist/)
-dist/
-*.tsbuildinfo
+# =================
+# Build, Deps & Caches
+# =================
+**/dist/
+**/build/
+**/bin/
+**/out/
+**/node_modules/
+**/.cache/
+**/.parcel-cache/
+**/.turbo/
+**/*.tsbuildinfo
