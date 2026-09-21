@@ -9,7 +9,12 @@ bun install
 To run:
 
 ```bash
-bun run index.ts
+bun build:all
+
+bun start:seeder
+bun start:indexer
+bun start:watcher
+
 ```
 
-This project was created using `bun init` in bun v1.4.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+README.md is WIP.
