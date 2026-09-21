@@ -1,19 +1,12 @@
 import Bun from "bun";
 import { join } from "node:path";
-import { rm } from "node:fs/promises";
-import tsconfigJson from "./tsconfig.json";
+import tsconfigJson from "../tsconfig.json";
 
-const ENRTY_POINT = join(import.meta.dir, "src", "index.ts");
-const DIST_DIR = join(import.meta.dir, tsconfigJson.compilerOptions.outDir);
+const ENRTY_POINT = join(process.cwd(), "src", "index.ts");
+const DIST_DIR = join(process.cwd(), tsconfigJson.compilerOptions.outDir);
+const META_DIR = join(process.cwd(), tsconfigJson.compilerOptions.outDir, "meta.json");
 
-// 1. Clean the old dist folder asynchronously using Bun's recommended API
-try {
-  await rm(DIST_DIR, { recursive: true, force: true });
-} catch (error) {
-  console.error("❌ Failed to clean dist folder:", error);
-}
-
-// 2. Build JavaScript with Bun's native bundler
+// 1. Build JavaScript with Bun's native bundler
 const buildResult = await Bun.build({
   entrypoints: [ENRTY_POINT],
   outdir: DIST_DIR,
@@ -48,11 +41,11 @@ if (!buildResult.success) {
     }
 
     // Save for external analysis tools
-    await Bun.write("./dist/meta.json", JSON.stringify(buildResult.metafile));
+    await Bun.write(META_DIR, JSON.stringify(buildResult.metafile));
   }
 }
 
-// 3. Generate Type Declarations with tsc using Bun's native subprocess runner
+// 2. Generate Type Declarations with tsc using Bun's native subprocess runner
 const tscProcess = Bun.spawn(["bun", "x", "tsc", "--build"], {
   stdout: "inherit",
   stderr: "inherit",
@@ -66,4 +59,4 @@ if (exitCode !== 0) {
 }
 
 console.log("\n");
-console.log("🎉 Build Complete! Dist directory at ./dist");
+console.log(`🎉 Build Complete! Dist directory at ${DIST_DIR}`);

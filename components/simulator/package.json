@@ -3,9 +3,12 @@
   "version": "0.0.1",
   "description": "Simulator",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "clean": "bun run tools/clean.ts",
+    "build": "bun clean && bun run tools/build.ts",
+    "start": "bun run dist/index.js"
   },
   "dependencies": {
     "@packages/abis": "workspace:^",
@@ -14,6 +17,8 @@
     "viem": "^2.56.5"
   },
   "devDependencies": {
+    "@types/bun": "catalog:devDependencies",
+    "@types/node": "catalog:devDependencies",
     "typescript": "catalog:devDependencies"
   }
 }

@@ -3,19 +3,25 @@
   "version": "0.0.1",
   "description": "Watcher",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "clean": "bun run tools/clean.ts",
+    "build": "bun clean && bun run tools/build.ts",
+    "start": "bun run dist/index.js"
   },
   "dependencies": {
     "@packages/abis": "workspace:^",
     "@packages/core": "workspace:^",
-    "pg": "^8.23.0",
+    "@packages/db": "workspace:^",
+    "@pythnetwork/hermes-client": "^3.1.0",
+    "drizzle-orm": "^1.0.0-rc.4",
     "redis": "^6.2.1",
     "viem": "^2.56.5"
   },
   "devDependencies": {
-    "@types/pg": "^8.23.1",
+    "@types/bun": "catalog:devDependencies",
+    "@types/node": "catalog:devDependencies",
     "typescript": "catalog:devDependencies"
   }
 }

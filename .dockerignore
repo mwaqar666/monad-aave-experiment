@@ -45,6 +45,7 @@ Desktop.ini
 # Logs & Databases
 # =================
 *.log
+*-logs.txt
 logs/
 *.sqlite
 *.sqlite3
@@ -60,12 +61,12 @@ secrets.json
 # =================
 # Build, Deps & Caches
 # =================
-**/dist/
-**/build/
-**/bin/
-**/out/
-**/node_modules/
-**/.cache/
-**/.parcel-cache/
-**/.turbo/
-**/*.tsbuildinfo
+dist/
+build/
+bin/
+out/
+node_modules/
+.cache/
+.parcel-cache/
+.turbo/
+*.tsbuildinfo

@@ -47,7 +47,72 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 3: Seeder
+  # SERVICE 3: Wormhole Spy
+  # Connects to the mainnet Wormhole peer-to-peer network to listen
+  # for Verifiable Action Approvals (VAAs) published by Guardians.
+  # ─────────────────────────────────────────────────────────────
+  wormhole-spy:
+    image: ghcr.io/wormhole-foundation/guardiand:latest
+    container_name: wormhole-spy
+    restart: unless-stopped
+    entrypoint: /guardiand
+    environment:
+      - HOME=/data
+    command:
+      - spy
+      - --nodeKey
+      - /node.key
+      - --spyRPC
+      - "[::]:7073"
+      - --env
+      - mainnet
+    ports:
+      - "7073:7073"
+    volumes:
+      - spy_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 7073 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 4: Hermes Server
+  # Connects to the local Spy's gRPC stream, pulls data from a public
+  # RPC, and exposes standard REST/SSE endpoints.
+  # ─────────────────────────────────────────────────────────────
+  hermes:
+    container_name: hermes
+    restart: unless-stopped
+    build:
+      context: https://github.com/pyth-network/pyth-crosschain.git#main:apps/hermes/server
+    depends_on:
+      wormhole-spy:
+        condition: service_healthy
+    command:
+      - run
+      - --spy-rpc-url
+      - wormhole-spy:7073
+      - --rpc-url
+      - https://solana-rpc.publicnode.com
+      - --http-bind-addr
+      - 0.0.0.0:8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/v2/price_feeds"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - monad-net
+
+  # ─────────────────────────────────────────────────────────────
+  # SERVICE 5: Seeder
   # Seeds the database with historical events from the chains.
   # ─────────────────────────────────────────────────────────────
   seeder:
@@ -55,7 +120,7 @@ services:
       context: .
       dockerfile: components/seeder/Dockerfile
     container_name: seeder
-    restart: on-failure
+    restart: unless-stopped
     environment:
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
@@ -74,7 +139,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 4: Indexer
+  # SERVICE 6: Indexer
   # Listens to Aave events on Monad and writes to PostgreSQL.
   # ─────────────────────────────────────────────────────────────
   indexer:
@@ -103,7 +168,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 5: Watcher
+  # SERVICE 7: Watcher
   # Reads PostgreSQL, calculates health factors, pushes to Redis.
   # ─────────────────────────────────────────────────────────────
   watcher:
@@ -120,6 +185,7 @@ services:
       RPC_URL_ARBITRUM: ${RPC_URL_ARBITRUM}
       RPC_URL_OPTIMISM: ${RPC_URL_OPTIMISM}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DATABASE_SCHEMA: ${POSTGRES_SCHEMA}
       REDIS_URL: redis://redis:6379
       POLL_INTERVAL: 5000
       HF_THRESHOLD: 0.95
@@ -134,7 +200,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 6: Simulator (Optional — enable after we build it)
+  # SERVICE 8: Simulator (Optional — enable after we build it)
   # Pulls from Redis, runs Anvil fork simulations.
   # ─────────────────────────────────────────────────────────────
   simulator:
@@ -160,7 +226,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 7: Executor (Optional — enable after we build it)
+  # SERVICE 9: Executor (Optional — enable after we build it)
   # Pulls approved opportunities from Redis, submits transactions.
   # ─────────────────────────────────────────────────────────────
   # executor:
@@ -183,6 +249,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  spy_data:
     driver: local
 
 networks:

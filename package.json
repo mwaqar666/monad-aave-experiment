@@ -15,6 +15,15 @@
     }
   },
   "scripts": {
+    "clean:package:abis": "bun --filter @packages/abis clean",
+    "clean:package:core": "bun --filter @packages/core clean",
+    "clean:package:db": "bun --filter @packages/db clean",
+    "clean:packages": "bun run clean:package:abis && bun run clean:package:core && bun run clean:package:db",
+    "clean:component:seeder": "bun --filter seeder clean",
+    "clean:component:watcher": "bun --filter watcher clean",
+    "clean:component:simulator": "bun --filter simulator clean",
+    "clean:components": "bun run clean:component:seeder && bun run clean:component:watcher && bun run clean:component:simulator",
+    "clean:all": "bun run clean:packages && bun run clean:components",
     "build:package:abis": "bun --filter @packages/abis build",
     "build:package:core": "bun --filter @packages/core build",
     "build:package:db": "bun --filter @packages/db build",
@@ -26,7 +35,7 @@
     "build:all": "bun run build:packages && bun run build:components",
     "start:indexer": "bun --filter indexer dev",
     "start:seeder": "bun --filter seeder start",
-    "start:watcher": "bun run components/watcher/dist/index.js",
-    "start:simulator": "bun run components/simulator/dist/index.js"
+    "start:watcher": "bun --filter watcher start",
+    "start:simulator": "bun --filter simulator start"
   }
 }

@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "bun run build.ts"
+    "clean": "bun run tools/clean.ts",
+    "build": "bun clean && bun run tools/build.ts"
   },
   "devDependencies": {
     "@types/bun": "catalog:devDependencies",
