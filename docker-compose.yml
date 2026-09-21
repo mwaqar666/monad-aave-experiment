@@ -70,8 +70,9 @@ services:
       - "7073:7073"
     volumes:
       - spy_data:/data
+      - ./tools/scripts/healthchecks:/tools/scripts/healthchecks:ro
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 7073 || exit 1"]
+      test: ["CMD-SHELL", "bash /tools/scripts/healthchecks/spy.sh 7073"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -86,30 +87,34 @@ services:
   # ─────────────────────────────────────────────────────────────
   hermes:
     build:
-        context: ./vendor/pyth-crosschain/apps/hermes/server
+      context: ./vendor/pyth-crosschain
+      dockerfile: apps/hermes/server/Dockerfile
     container_name: hermes
     restart: unless-stopped
-    build:
-      context: https://github.com/pyth-network/pyth-crosschain.git#main:apps/hermes/server
     depends_on:
       wormhole-spy:
         condition: service_healthy
+    entrypoint: "hermes"
     command:
       - run
-      - --spy-rpc-url
-      - wormhole-spy:7073
-      - --rpc-url
-      - https://solana-rpc.publicnode.com
-      - --http-bind-addr
-      - 0.0.0.0:8080
+      - --wormhole-spy-rpc-addr
+      - http://wormhole-spy:7073
+      - --pythnet-http-addr
+      - https://pythnet.rpcpool.com
+      - --pythnet-ws-addr
+      - wss://pythnet.rpcpool.com
+      - --rpc-listen-addr
+      - 0.0.0.0:33999
     ports:
-      - "8080:8080"
+      - "33999:33999"
+    volumes:
+      - ./tools/scripts/healthchecks:/tools/scripts/healthchecks:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/v2/price_feeds"]
+      test: ["CMD-SHELL", "bash /tools/scripts/healthchecks/hermes.sh 33999"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 30s
     networks:
       - monad-net
 
