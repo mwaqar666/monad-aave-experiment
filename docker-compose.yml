@@ -85,6 +85,8 @@ services:
   # RPC, and exposes standard REST/SSE endpoints.
   # ─────────────────────────────────────────────────────────────
   hermes:
+    build:
+        context: ./vendor/pyth-crosschain/apps/hermes/server
     container_name: hermes
     restart: unless-stopped
     build:

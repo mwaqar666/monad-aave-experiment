@@ -1,3 +1,3 @@
-[submodule "tools/pyth-crosschain"]
-	path = tools/pyth-crosschain
+[submodule "vendor/pyth-crosschain"]
+	path = vendor/pyth-crosschain
 	url = https://github.com/pyth-network/pyth-crosschain
