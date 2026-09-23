@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { createClient, type RedisClientType } from "redis";
+import { RedisClient } from "bun";
 
 import type { Address, Optional } from "@packages/core";
 import type { IPriceFeed } from "./price-feeds.ts";
@@ -26,7 +26,7 @@ export interface IAssetPrice extends Omit<IPriceRecord, "updatedAt"> {
 
 export class PriceRegistry extends EventEmitter {
   private static instance: PriceRegistry;
-  private redis: RedisClientType;
+  private redis: RedisClient;
   private keys = new Set<PriceRecordKey>();
   private readonly movedBps = 5;
   private readonly staleMs = 60_000;
@@ -35,10 +35,10 @@ export class PriceRegistry extends EventEmitter {
     super();
 
     const url = process.env["REDIS_URL"] ?? "redis://localhost:6379";
-    this.redis = createClient({ url });
+    this.redis = new RedisClient(url);
 
-    this.redis.on("ready", () => console.log(`[PriceRegistry] Connected to Redis (${url})`));
-    this.redis.on("error", (err) => console.error("[PriceRegistry] Redis error:", err.message));
+    this.redis.onconnect = () => console.log(`[PriceRegistry] Connected to Redis (${url})`);
+    this.redis.onclose = (err) => console.error("[PriceRegistry] Redis error:", err.message);
   }
 
   public static getInstance(): PriceRegistry {
@@ -72,7 +72,7 @@ export class PriceRegistry extends EventEmitter {
     const previous = await this.getPriceRecord(chainId, assetAddress);
 
     // Persist to Redis hash.
-    await this.redis.hSet(key, {
+    await this.redis.hset(key, {
       priceUsd: normalized.toString(),
       expo: (-PRICE_DECIMALS).toString(),
       publishTime: publishTime.toString(),
@@ -102,7 +102,7 @@ export class PriceRegistry extends EventEmitter {
   }
 
   public async getPriceRecord(chainId: number, assetAddress: Address): Promise<Optional<IPriceRecord>> {
-    const data = await this.redis.hGetAll(this.keyFor(chainId, assetAddress));
+    const data = await this.redis.hgetall(this.keyFor(chainId, assetAddress));
     if (!data["priceUsd"]) return;
 
     return {

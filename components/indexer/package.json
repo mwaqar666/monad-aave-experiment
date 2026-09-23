@@ -18,7 +18,7 @@
     "hono": "^4.13.7",
     "ponder": "^0.17.10",
     "postgres": "^3.4.9",
-    "viem": "^2.56.5"
+    "viem": "catalog:dependencies"
   },
   "devDependencies": {
     "typescript": "catalog:devDependencies",

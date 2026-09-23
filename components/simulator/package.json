@@ -13,8 +13,7 @@
   "dependencies": {
     "@packages/abis": "workspace:^",
     "@packages/core": "workspace:^",
-    "redis": "^6.2.1",
-    "viem": "^2.56.5"
+    "viem": "catalog:dependencies"
   },
   "devDependencies": {
     "@types/bun": "catalog:devDependencies",

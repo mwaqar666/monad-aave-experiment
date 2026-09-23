@@ -7,10 +7,15 @@
       "components/*"
     ],
     "catalogs": {
+      "dependencies": {
+        "viem": "^2.56.5",
+        "drizzle-orm": "^1.0.0-rc.4"
+      },
       "devDependencies": {
         "@types/bun": "^1.4.2",
         "@types/node": "^26.5.1",
-        "typescript": "^7"
+        "typescript": "^7",
+        "drizzle-kit": "^1.0.0-rc.4"
       }
     }
   },

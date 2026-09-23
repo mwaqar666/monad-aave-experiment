@@ -12,12 +12,12 @@
   },
   "peerDependencies": {
     "@packages/core": "workspace:^",
-    "drizzle-orm": "^1.0.0-rc.4"
+    "drizzle-orm": "catalog:dependencies"
   },
   "devDependencies": {
     "@types/bun": "catalog:devDependencies",
     "@types/node": "catalog:devDependencies",
-    "drizzle-kit": "^1.0.0-rc.4",
+    "drizzle-kit": "catalog:devDependencies",
     "typescript": "catalog:devDependencies"
   }
 }
