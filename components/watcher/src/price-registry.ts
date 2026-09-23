@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { createClient, type RedisClientType } from "redis";
 
 import type { Address, Optional } from "@packages/core";
 import type { IPriceFeed } from "./price-feeds.ts";
@@ -6,7 +7,7 @@ import type { IPriceFeed } from "./price-feeds.ts";
 const PRICE_DECIMALS = 8;
 
 /**
- * PriceRecordKey = `${chainId}:${assetAddress}` — used as the key in the price registry map.
+ * PriceRecordKey = `${chainId}:${assetAddress}` — used as the Redis hash key.
  */
 export type PriceRecordKey = `${number}:${Address}`;
 
@@ -25,119 +26,107 @@ export interface IAssetPrice extends Omit<IPriceRecord, "updatedAt"> {
 
 export class PriceRegistry extends EventEmitter {
   private static instance: PriceRegistry;
-  private priceRecord: Map<PriceRecordKey, IPriceRecord> = new Map();
-
-  // Configured thresholds (exposed for tests)
+  private redis: RedisClientType;
+  private keys = new Set<PriceRecordKey>();
   private readonly movedBps = 5;
   private readonly staleMs = 60_000;
 
   private constructor() {
     super();
+
+    const url = process.env["REDIS_URL"] ?? "redis://localhost:6379";
+    this.redis = createClient({ url });
+
+    this.redis.on("ready", () => console.log(`[PriceRegistry] Connected to Redis (${url})`));
+    this.redis.on("error", (err) => console.error("[PriceRegistry] Redis error:", err.message));
   }
 
   public static getInstance(): PriceRegistry {
     if (PriceRegistry.instance) return PriceRegistry.instance;
 
     PriceRegistry.instance = new PriceRegistry();
+    PriceRegistry.instance.redis.connect().catch((err) => console.error("[PriceRegistry] Redis connect failure:", err.message));
     return PriceRegistry.instance;
   }
 
-  /**
-   * Pre-populate the registry keys (optional — used for observability).
-   */
-  public init(priceFeeds: IPriceFeed[]): void {
-    for (const priceFeed of priceFeeds) {
-      const priceRecordKey = `${priceFeed.chainId}:${priceFeed.assetAddress}` satisfies PriceRecordKey;
+  /** Redis hash key for a chain+asset. */
+  private keyFor(chainId: number, assetAddress: Address): PriceRecordKey {
+    return `${chainId}:${assetAddress}` as PriceRecordKey;
+  }
 
-      const priceRecord = this.priceRecord.get(priceRecordKey);
-      if (priceRecord) return;
-
-      this.priceRecord.set(priceRecordKey, {
-        priceUsd: 0n,
-        expo: -priceFeed.decimals,
-        publishTime: 0n,
-        updatedAt: 0,
-      });
+  /** Register which price feeds we care about (tracks the key set). */
+  public async init(priceFeeds: IPriceFeed[]): Promise<void> {
+    for (const feed of priceFeeds) {
+      this.keys.add(this.keyFor(feed.chainId, feed.assetAddress));
     }
   }
 
   /**
    * Set the price for a given asset on a specific chain.
+   * Persists to Redis and emits change events for downstream liquidation logic.
    */
-  public setPrice(chainId: number, assetAddress: Address, priceUsd: bigint, expo: number, publishTime: bigint): void {
-    const key = `${chainId}:${assetAddress}` satisfies PriceRecordKey;
-    const previous = this.priceRecord.get(key);
-
-    // Normalize price to the standard 8-decimal base so that deltas are
-    // comparable regardless of the source feed's native exponent (e.g. Pyth).
+  public async setPrice(chainId: number, assetAddress: Address, priceUsd: bigint, expo: number, publishTime: bigint): Promise<void> {
+    const key = this.keyFor(chainId, assetAddress);
     const normalized = this.toBaseUnits(priceUsd, expo);
+    const updatedAt = Date.now();
+    const previous = await this.getPriceRecord(chainId, assetAddress);
 
-    this.priceRecord.set(key, {
-      priceUsd: normalized,
-      expo: -PRICE_DECIMALS,
-      publishTime,
-      updatedAt: Date.now(),
+    // Persist to Redis hash.
+    await this.redis.hSet(key, {
+      priceUsd: normalized.toString(),
+      expo: (-PRICE_DECIMALS).toString(),
+      publishTime: publishTime.toString(),
+      updatedAt: updatedAt.toString(),
     });
+    this.keys.add(key);
 
-    // Check price delta to trigger liquidation evaluation
     if (previous && previous.updatedAt > 0) {
       if (this.isStale(previous)) {
-        // Previous price is stale — treat as a fresh initialization instead of a delta.
-        this.emit("price:initialized", {
-          chainId: chainId,
-          assetAddress: assetAddress,
-          priceUsd: normalized,
-        });
+        this.emit("price:initialized", { chainId, assetAddress, priceUsd: normalized });
         return;
       }
 
       const deltaBps = this.calcDeltaBps(previous.priceUsd, normalized);
       if (Math.abs(deltaBps) >= this.movedBps) {
-        this.emit("price:moved", {
-          chainId: chainId,
-          assetAddress: assetAddress,
-          oldPriceUsd: previous.priceUsd,
-          newPriceUsd: normalized,
-          deltaBps,
-        });
+        this.emit("price:moved", { chainId, assetAddress, oldPriceUsd: previous.priceUsd, newPriceUsd: normalized, deltaBps });
       }
     } else {
-      this.emit("price:initialized", {
-        chainId: chainId,
-        assetAddress: assetAddress,
-        priceUsd: normalized,
-      });
+      this.emit("price:initialized", { chainId, assetAddress, priceUsd: normalized });
     }
   }
 
-  /**
-   * Get the latest known price for a given asset on a specific chain.
-   */
-  public getPrice(chainId: number, assetAddress: Address): Optional<bigint> {
-    const priceRecord = this.priceRecord.get(`${chainId}:${assetAddress}`);
-    if (!priceRecord) {
-      console.warn(`[PriceRegistry] No price record for ${chainId}:${assetAddress}`);
-      return;
-    }
-
-    return priceRecord.priceUsd;
+  /** Get the latest known price for a given asset on a specific chain. */
+  public async getPrice(chainId: number, assetAddress: Address): Promise<Optional<bigint>> {
+    const record = await this.getPriceRecord(chainId, assetAddress);
+    return record?.priceUsd;
   }
 
-  public getPriceRecord(chainId: number, assetAddress: Address): Optional<IPriceRecord> {
-    return this.priceRecord.get(`${chainId}:${assetAddress}`);
+  public async getPriceRecord(chainId: number, assetAddress: Address): Promise<Optional<IPriceRecord>> {
+    const data = await this.redis.hGetAll(this.keyFor(chainId, assetAddress));
+    if (!data["priceUsd"]) return;
+
+    return {
+      priceUsd: BigInt(data["priceUsd"]!),
+      expo: parseInt(data["expo"] ?? "0"),
+      publishTime: BigInt(data["publishTime"] ?? "0"),
+      updatedAt: parseInt(data["updatedAt"] ?? "0"),
+    };
   }
 
-  public getAllPrices(): IAssetPrice[] {
+  public async getAllPrices(): Promise<IAssetPrice[]> {
     const assetPrices: IAssetPrice[] = [];
-    for (const [priceRecordKey, priceRecord] of this.priceRecord) {
-      const [chainId, assetAddress] = priceRecordKey.split(":") as [string, Address];
+    for (const key of this.keys) {
+      const [chainIdStr, assetAddress] = key.split(":") as [string, Address];
+      const record = await this.getPriceRecord(parseInt(chainIdStr), assetAddress);
+      if (!record) continue;
+
       assetPrices.push({
-        chainId: parseInt(chainId),
-        assetAddress: assetAddress,
-        priceUsd: priceRecord.priceUsd,
-        expo: priceRecord.expo,
-        publishTime: priceRecord.publishTime,
-        stale: !this.isFresh(priceRecord),
+        chainId: parseInt(chainIdStr),
+        assetAddress,
+        priceUsd: record.priceUsd,
+        expo: record.expo,
+        publishTime: record.publishTime,
+        stale: !this.isFresh(record),
       });
     }
     return assetPrices;
@@ -154,22 +143,17 @@ export class PriceRegistry extends EventEmitter {
 
   /**
    * Basis-point delta between two 8-decimal prices.
+   * 1 bps = 0.01% = 0.0001 = 1 / 10,000
    */
   private calcDeltaBps(oldPrice: bigint, newPrice: bigint): number {
     if (oldPrice === 0n) return 0;
     return Number(((newPrice - oldPrice) * 10000n) / oldPrice);
   }
 
-  /**
-   * True if the latest known price for this feed is stale.
-   */
-  public isStale(record: IPriceRecord): boolean {
+  private isStale(record: IPriceRecord): boolean {
     return !this.isFresh(record);
   }
 
-  /**
-   * A price is stale if it hasn't been updated within the stale window.
-   */
   private isFresh(record: IPriceRecord): boolean {
     return Date.now() - record.updatedAt < this.staleMs;
   }

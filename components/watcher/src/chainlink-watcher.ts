@@ -48,7 +48,7 @@ export class ChainlinkWatcherService {
     const eventWatcher = client.watchEvent({
       address: priceFeeds.map((m) => m.oracleAddress),
       event: ANSWER_UPDATED_EVENT,
-      onLogs: (logs) => {
+      onLogs: async (logs) => {
         for (const log of logs) {
           const priceFeed = priceFeeds.find((pf) => pf.oracleAddress === log.address);
           if (!priceFeed) continue;
@@ -58,7 +58,7 @@ export class ChainlinkWatcherService {
 
           if (currentAnswer && updatedAt) {
             // Chainlink USD feeds are natively 8 decimals.
-            this.registry.setPrice(chain.config.id, priceFeed.assetAddress, currentAnswer, -8, updatedAt);
+            await this.registry.setPrice(chain.config.id, priceFeed.assetAddress, currentAnswer, -8, updatedAt);
           }
         }
       },

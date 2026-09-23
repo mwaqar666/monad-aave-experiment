@@ -14,7 +14,6 @@ COPY package.json tsconfig.json bun.lock ./
 COPY components/watcher ./components/watcher
 
 # copy component dependencies
-COPY packages/abis ./packages/abis
 COPY packages/core ./packages/core
 COPY packages/db ./packages/db
 
@@ -22,7 +21,6 @@ COPY packages/db ./packages/db
 RUN bun install --frozen-lockfile
 
 # build packages
-RUN bun build:package:abis
 RUN bun build:package:core
 RUN bun build:package:db
 
@@ -34,10 +32,6 @@ WORKDIR /home/bun/app
 
 COPY --from=builder /home/bun/app/node_modules ./node_modules
 COPY --from=builder /home/bun/app/package.json /home/bun/app/bun.lock ./
-
-COPY --from=builder /home/bun/app/packages/abis/node_modules ./packages/abis/node_modules
-COPY --from=builder /home/bun/app/packages/abis/package.json ./packages/abis/package.json
-COPY --from=builder /home/bun/app/packages/abis/dist/index.js ./packages/abis/dist/index.js
 
 COPY --from=builder /home/bun/app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=builder /home/bun/app/packages/core/package.json ./packages/core/package.json

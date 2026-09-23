@@ -10,15 +10,15 @@ async function main() {
   console.log(`[Config] Resolved ${priceFeeds.length} reserve price feeds across chains.`);
 
   // 2. Initialize Price Registry with resolved tokens
-  priceRegistry.init(priceFeeds);
+  await priceRegistry.init(priceFeeds);
 
   // 3. Start Chainlink WebSocket listeners (Mainnet, Polygon, Base, Monad, Arbitrum, Optimism)
   const chainlinkWatcher = new ChainlinkWatcherService(priceFeeds);
   await chainlinkWatcher.start();
 
-  // 5. Monitor in-memory PriceRegistry state
-  setInterval(() => {
-    const prices = priceRegistry.getAllPrices();
+  // 4. Monitor Redis-backed PriceRegistry state
+  setInterval(async () => {
+    const prices = await priceRegistry.getAllPrices();
     console.log(`\n--- [PriceRegistry Snapshot: ${new Date().toISOString()}] ---`);
     console.table(prices);
   }, 5000);
