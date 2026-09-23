@@ -6,7 +6,7 @@ const PROTOCOL_AAVE_V3 = "aave_v3";
 ponder.on("AavePool:Supply", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Ensure parent account exists
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -21,13 +21,13 @@ ponder.on("AavePool:Supply", async ({ event, context }) => {
     .onConflictDoNothing();
 
   // 2. Mark this asset position as collateral for the account
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId: accountId,
-      marketId: market,
+      assetAddress: assetAddress,
       isCollateral: true,
     })
     .onConflictDoUpdate({
@@ -39,7 +39,7 @@ ponder.on("AavePool:Supply", async ({ event, context }) => {
 ponder.on("AavePool:Withdraw", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Ensure parent account exists
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -54,13 +54,13 @@ ponder.on("AavePool:Withdraw", async ({ event, context }) => {
     .onConflictDoNothing();
 
   // 2. Ensure position entry exists
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId,
-      marketId: market,
+      assetAddress: assetAddress,
     })
     .onConflictDoNothing();
 });
@@ -69,7 +69,7 @@ ponder.on("AavePool:Withdraw", async ({ event, context }) => {
 ponder.on("AavePool:Borrow", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.onBehalfOf;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Mark account as an active borrower
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -87,13 +87,13 @@ ponder.on("AavePool:Borrow", async ({ event, context }) => {
     });
 
   // 2. Mark this asset position as active debt
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId,
-      marketId: market,
+      assetAddress: assetAddress,
       isDebt: true,
     })
     .onConflictDoUpdate({
@@ -105,7 +105,7 @@ ponder.on("AavePool:Borrow", async ({ event, context }) => {
 ponder.on("AavePool:Repay", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Ensure parent account exists
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -120,13 +120,13 @@ ponder.on("AavePool:Repay", async ({ event, context }) => {
     .onConflictDoNothing();
 
   // 2. Ensure position entry exists
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId,
-      marketId: market,
+      assetAddress: assetAddress,
     })
     .onConflictDoNothing();
 });
@@ -135,7 +135,7 @@ ponder.on("AavePool:Repay", async ({ event, context }) => {
 ponder.on("AavePool:ReserveUsedAsCollateralEnabled", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Ensure parent account exists
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -150,13 +150,13 @@ ponder.on("AavePool:ReserveUsedAsCollateralEnabled", async ({ event, context }) 
     .onConflictDoNothing();
 
   // 2. Explicitly enable collateral
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId,
-      marketId: market,
+      assetAddress: assetAddress,
       isCollateral: true,
     })
     .onConflictDoUpdate({
@@ -168,7 +168,7 @@ ponder.on("AavePool:ReserveUsedAsCollateralEnabled", async ({ event, context }) 
 ponder.on("AavePool:ReserveUsedAsCollateralDisabled", async ({ event, context }) => {
   const chainId = context.chain.id;
   const user = event.args.user;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
 
   // 1. Ensure parent account exists
   const accountId = `${chainId}:${PROTOCOL_AAVE_V3}:${user}`;
@@ -183,13 +183,13 @@ ponder.on("AavePool:ReserveUsedAsCollateralDisabled", async ({ event, context })
     .onConflictDoNothing();
 
   // 2. Explicitly disable collateral
-  const positionId = `${accountId}:${market}`;
+  const positionId = `${accountId}:${assetAddress}`;
   await context.db
     .insert(position)
     .values({
       id: positionId,
       accountId,
-      marketId: market,
+      assetAddress: assetAddress,
       isCollateral: false,
     })
     .onConflictDoUpdate({
@@ -265,7 +265,7 @@ ponder.on("AavePool:LiquidationCall", async ({ event, context }) => {
     .values({
       id: collateralPositionId,
       accountId,
-      marketId: collateralAsset,
+      assetAddress: collateralAsset,
     })
     .onConflictDoNothing();
 
@@ -276,7 +276,7 @@ ponder.on("AavePool:LiquidationCall", async ({ event, context }) => {
     .values({
       id: debtPositionId,
       accountId,
-      marketId: debtAsset,
+      assetAddress: debtAsset,
     })
     .onConflictDoNothing();
 });
@@ -284,18 +284,18 @@ ponder.on("AavePool:LiquidationCall", async ({ event, context }) => {
 // ─────────────────────────────────────────────────────────────
 ponder.on("AavePool:ReserveDataUpdated", async ({ event, context }) => {
   const chainId = context.chain.id;
-  const market = event.args.reserve;
+  const assetAddress = event.args.reserve;
   const liquidityIndex = event.args.liquidityIndex;
   const variableBorrowIndex = event.args.variableBorrowIndex;
 
-  const indexId = `${chainId}:${PROTOCOL_AAVE_V3}:${market}`;
+  const indexId = `${chainId}:${PROTOCOL_AAVE_V3}:${assetAddress}`;
   await context.db
     .insert(reserveIndex)
     .values({
       id: indexId,
       chainId,
       protocol: PROTOCOL_AAVE_V3,
-      marketId: market,
+      assetAddress: assetAddress,
       liquidityIndex,
       variableBorrowIndex,
     })

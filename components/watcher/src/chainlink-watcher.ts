@@ -1,40 +1,72 @@
-import { createPublicClient, webSocket, parseAbiItem, type Address } from "viem";
+import { createPublicClient, webSocket, parseAbiItem } from "viem";
 
+import { Chain, Chains } from "@packages/core";
 import { PriceRegistry } from "./price-registry.ts";
+
+import type { IPriceFeed } from "./price-feeds.ts";
 
 const ANSWER_UPDATED_EVENT = parseAbiItem("event AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt)");
 
+/**
+ * Default public WebSocket RPC endpoints per chain.
+ * Override each via env: WSS_RPC_URL_MAINNET / _POLYGON / _ARBITRUM / _OPTIMISM / _BASE.
+ * NOTE: Monad has no Chainlink price feeds — it is priced via Pyth only.
+ */
 export class ChainlinkWatcherService {
   private registry = PriceRegistry.getInstance();
+  private chainToPriceFeeds = new Map<Chain, IPriceFeed[]>();
 
-  public watchChainFeeds(chainId: number, wsRpcUrl: string, feedMappings: { marketAddress: Address; oracleAddress: Address }[]) {
+  public constructor(priceFeeds: IPriceFeed[]) {
+    this.groupPriceFeedsByChain(priceFeeds);
+  }
+
+  public async start(): Promise<void> {
+    for (const [chainKey, priceFeeds] of this.chainToPriceFeeds) {
+      this.watchChain(chainKey, priceFeeds);
+    }
+  }
+
+  private groupPriceFeedsByChain(priceFeeds: IPriceFeed[]): void {
+    for (const priceFeed of priceFeeds) {
+      const priceFeedsOfChain = this.chainToPriceFeeds.get(priceFeed.chainKey) ?? [];
+      priceFeedsOfChain.push(priceFeed);
+
+      this.chainToPriceFeeds.set(priceFeed.chainKey, priceFeedsOfChain);
+    }
+  }
+
+  private watchChain(chainKey: Chain, priceFeeds: IPriceFeed[]): void {
+    const chain = Chains[chainKey];
+
     const client = createPublicClient({
-      transport: webSocket(wsRpcUrl),
+      chain: chain.config,
+      transport: webSocket(chain.urls.ws),
     });
 
-    console.log(`Starting Chainlink feed watcher for chain ID: ${chainId}`);
+    console.log(`[Chainlink] Watching ${priceFeeds.length} oracle feed(s) on chain ${chain.config.name} over WS.`);
 
-    for (const { marketAddress, oracleAddress } of feedMappings) {
-      client.watchEvent({
-        address: oracleAddress,
-        event: ANSWER_UPDATED_EVENT,
-        onLogs: (logs) => {
-          for (const log of logs) {
-            const currentAnswer = log.args.current;
-            const updatedAt = log.args.updatedAt;
+    const eventWatcher = client.watchEvent({
+      address: priceFeeds.map((m) => m.oracleAddress),
+      event: ANSWER_UPDATED_EVENT,
+      onLogs: (logs) => {
+        for (const log of logs) {
+          const priceFeed = priceFeeds.find((pf) => pf.oracleAddress === log.address);
+          if (!priceFeed) continue;
 
-            if (currentAnswer && updatedAt) {
-              // Chainlink USD feeds are natively 8 decimals
-              const priceUsd = BigInt(currentAnswer);
+          const currentAnswer = log.args.current;
+          const updatedAt = log.args.updatedAt;
 
-              this.registry.setPrice(chainId, marketAddress, priceUsd, -8, updatedAt);
-            }
+          if (currentAnswer && updatedAt) {
+            // Chainlink USD feeds are natively 8 decimals.
+            this.registry.setPrice(chain.config.id, priceFeed.assetAddress, currentAnswer, -8, updatedAt);
           }
-        },
-        onError: (error) => {
-          console.error(`Error on Chainlink feed (${oracleAddress}) on chain ${chainId}:`, error);
-        },
-      });
-    }
+        }
+      },
+      onError: (error) => {
+        console.error(`[Chainlink] Error on chain ${chain.config.name}:`, error);
+      },
+    });
+
+    eventWatcher();
   }
 }

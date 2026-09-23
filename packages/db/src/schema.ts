@@ -7,12 +7,14 @@ import { boolean, integer, pgTable, text } from "drizzle-orm/pg-core";
  * Ponder does NOT declare this table — no conflict.
  * ─────────────────────────────────────────────────────────────
  */
-export const marketMetadata = pgTable("market_metadata", {
-  id: text().primaryKey(), // Format: `${chainId}:${protocol}:${marketId}`
+export const assetMetadata = pgTable("asset_metadata", {
+  id: text().primaryKey(), // Format: `${chainId}:${protocol}:${assetAddress}`
   chainId: integer().notNull(),
   protocol: text().notNull(),
-  marketId: text().notNull(), // Underlying token address
-  assetSymbol: text().notNull().default(""),
+  assetAddress: text().notNull(), // Underlying token address
+  aTokenAddress: text().notNull(),
+  variableDebtTokenAddress: text().notNull(),
+  symbol: text().notNull().default(""),
   decimals: integer().notNull().default(18),
   oracleAddress: text().notNull().default("0x0000000000000000000000000000000000000000"),
   liquidationThresholdBps: integer().notNull().default(0),

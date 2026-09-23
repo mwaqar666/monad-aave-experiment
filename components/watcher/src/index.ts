@@ -1,153 +1,30 @@
-// import { createPublicClient, http, type Address } from "viem";
-// import { Pool } from "pg";
-// import { createClient } from "redis";
+import { getPriceFeeds } from "./price-feeds.ts";
+import { priceRegistry } from "./price-registry.ts";
+import { ChainlinkWatcherService } from "./chainlink-watcher.ts";
 
-// import { AavePoolAbi } from "@packages/abis";
-// import { Chains, env } from "@packages/core";
-// import type { AllChainType, Chain, IChain } from "@packages/core";
+async function main() {
+  console.log("🚀 Starting Off-Chain Price Ingestion Service...");
 
-// // ─────────────────────────────────────────────────────────────
-// // CONFIGURATION
-// // ─────────────────────────────────────────────────────────────
+  // 1. Resolve price feed mappings from DB & local Hermes
+  const priceFeeds = await getPriceFeeds();
+  console.log(`[Config] Resolved ${priceFeeds.length} reserve price feeds across chains.`);
 
-// const DATABASE_URL = env("DATABASE_URL");
-// const REDIS_URL = env("REDIS_URL");
-// const POLL_INTERVAL_MS = parseInt(env("POLL_INTERVAL"));
-// const HF_THRESHOLD = parseInt(env("HF_THRESHOLD"));
+  // 2. Initialize Price Registry with resolved tokens
+  priceRegistry.init(priceFeeds);
 
-// // ─────────────────────────────────────────────────────────────
-// // CLIENTS
-// // ─────────────────────────────────────────────────────────────
-// const pgPool = new Pool({ connectionString: DATABASE_URL });
-// const redisClient = createClient({ url: REDIS_URL });
+  // 3. Start Chainlink WebSocket listeners (Mainnet, Polygon, Base, Monad, Arbitrum, Optimism)
+  const chainlinkWatcher = new ChainlinkWatcherService(priceFeeds);
+  await chainlinkWatcher.start();
 
-// // ─────────────────────────────────────────────────────────────
-// // HELPERS
-// // ─────────────────────────────────────────────────────────────
+  // 5. Monitor in-memory PriceRegistry state
+  setInterval(() => {
+    const prices = priceRegistry.getAllPrices();
+    console.log(`\n--- [PriceRegistry Snapshot: ${new Date().toISOString()}] ---`);
+    console.table(prices);
+  }, 5000);
+}
 
-// interface IUserData {
-//   totalCollateralBase: bigint;
-//   totalDebtBase: bigint;
-//   availableBorrowsBase: bigint;
-//   currentLiquidationThreshold: bigint;
-//   ltv: bigint;
-//   healthFactor: bigint;
-// }
-
-// async function pushToQueue(user: Address, chainId: number, data: IUserData) {
-//   const payload = JSON.stringify({
-//     user,
-//     chainId,
-//     totalCollateralBase: Number(data.totalCollateralBase / BigInt(1e8)),
-//     totalDebtBase: Number(data.totalDebtBase / BigInt(1e8)),
-//     healthFactor: Number(data.healthFactor / BigInt(1e18)),
-//     ltv: Number(data.ltv / BigInt(1e4)),
-//     currentLiquidationThreshold: Number(data.currentLiquidationThreshold / BigInt(1e4)),
-//     timestamp: Date.now(),
-//   });
-//   await redisClient.lPush("liquidation:candidates", payload);
-//   console.log(`[QUEUE] Chain ${chainId} | ${user} | HF: ${Number(data.healthFactor / BigInt(1e18)).toFixed(4)} | Debt: $${Number(data.totalDebtBase / BigInt(1e8)).toFixed(2)}`);
-// }
-
-// // ─────────────────────────────────────────────────────────────
-// // CHAIN SCAN: Check all borrowers on one chain
-// // ─────────────────────────────────────────────────────────────
-
-// async function checkChainBorrowers<ChainKey extends Chain, ChainConfig extends AllChainType>(chain: IChain<ChainKey, ChainConfig>) {
-//   const viemClient = createPublicClient({ transport: http(chain.rpcUrl) });
-
-//   // 1. Fetch all borrowers for this chain from PostgreSQL
-//   const result = await pgPool.query<{ id: string; user_address: string }>(`SELECT id, user_address FROM account WHERE chain_id = $1 AND has_borrowed = true`, [chain.config.id]);
-
-//   const borrowers = result.rows;
-//   if (borrowers.length === 0) {
-//     console.log(`[SCAN] ${chain.config.name}: No borrowers found`);
-//     return;
-//   }
-
-//   console.log(`[SCAN] ${chain.config.name}: Checking ${borrowers.length} borrowers...`);
-
-//   // 2. Batch call getUserAccountData
-//   const calls = borrowers.map((row) =>
-//     viemClient
-//       .readContract({
-//         address: chain.addresses.pool,
-//         abi: AavePoolAbi,
-//         functionName: "getUserAccountData",
-//         args: [row.user_address as Address],
-//       })
-//       .then((data) => ({ user: row.user_address as Address, data })),
-//   );
-
-//   const results = await Promise.allSettled(calls);
-
-//   // 3. Process results
-//   let liquidatableCount = 0;
-//   for (const settled of results) {
-//     if (settled.status === "rejected") continue;
-
-//     const { user, data } = settled.value;
-//     const [totalCollateralBase, totalDebtBase, , currentLiquidationThreshold, ltv, healthFactor] = data;
-
-//     const hfDisplay = Number(healthFactor / BigInt(1e18));
-//     const debtDisplay = Number(totalDebtBase / BigInt(1e8));
-
-//     console.log(`[CHECK] ${chain.config.name} | ${user} | HF: ${hfDisplay.toFixed(4)} | Debt: $${debtDisplay.toFixed(2)}`);
-
-//     if (totalDebtBase <= 0n) continue;
-
-//     if (healthFactor < BigInt(Math.floor(HF_THRESHOLD * 1e18))) {
-//       liquidatableCount++;
-//       await pushToQueue(user, chain.config.id, {
-//         totalCollateralBase,
-//         totalDebtBase,
-//         availableBorrowsBase: data[2],
-//         currentLiquidationThreshold,
-//         ltv,
-//         healthFactor,
-//       });
-//     }
-//   }
-
-//   console.log(`[DONE] ${chain.config.name}: ${liquidatableCount} liquidatable | ${borrowers.length} checked`);
-// }
-
-// // ─────────────────────────────────────────────────────────────
-// // MAIN LOOP
-// // ─────────────────────────────────────────────────────────────
-// async function main() {
-//   console.log("[WATCHER] Starting Aave Liquidation Watcher (Multi-Chain)");
-//   console.log(
-//     `[WATCHER] Chains: ${Object.values(Chains)
-//       .map((c) => c.config.name)
-//       .join(", ")}`,
-//   );
-//   console.log(`[WATCHER] HF threshold: ${HF_THRESHOLD}`);
-//   console.log(`[WATCHER] Poll interval: ${POLL_INTERVAL_MS}ms`);
-
-//   await redisClient.connect();
-//   console.log("[WATCHER] Redis connected");
-
-//   const test = await pgPool.query("SELECT NOW()");
-//   console.log(`[WATCHER] PostgreSQL connected | Server time: ${test.rows[0].now}`);
-
-//   while (true) {
-//     const startTime = Date.now();
-//     for (const chain of Object.values(Chains)) {
-//       try {
-//         await checkChainBorrowers<typeof chain.key, typeof chain.config>(chain);
-//       } catch (err) {
-//         console.error(`[WATCHER] Error on ${chain.config.name}:`, err);
-//       }
-//     }
-//     const elapsed = Date.now() - startTime;
-//     console.log(`[CYCLE] All chains scanned in ${elapsed}ms`);
-//     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-//   }
-// }
-
-// main().catch((err) => {
-//   console.error("[WATCHER] Fatal error:", err);
-//   process.exit(1);
-// });
-import "./price-feeds.ts";
+main().catch((err) => {
+  console.error("Fatal error in watcher service:", err);
+  process.exit(1);
+});

@@ -53,4 +53,15 @@ export const AavePoolDataProviderAbi = [
       { name: "lastUpdateTimestamp", type: "uint40" },
     ],
   },
+  {
+    name: "getReserveTokensAddresses",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "asset", type: "address" }],
+    outputs: [
+      { name: "aTokenAddress", type: "address" },
+      { name: "stableDebtTokenAddress", type: "address" }, // DEPRECATED. See https://github.com/aave-dao/aave-v3-origin/blob/main/src/contracts/interfaces/IPoolDataProvider.sol#L214
+      { name: "variableDebtTokenAddress", type: "address" },
+    ],
+  },
 ] as const;

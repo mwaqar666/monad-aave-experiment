@@ -24,9 +24,9 @@ export const account = onchainTable("account", (t) => ({
  * ─────────────────────────────────────────────────────────────
  */
 export const position = onchainTable("position", (t) => ({
-  id: t.text().primaryKey(), // Format: `${accountId}:${marketId}`
+  id: t.text().primaryKey(), // Format: `${accountId}:${assetAddress}`
   accountId: t.text().notNull(),
-  marketId: t.hex().notNull(),
+  assetAddress: t.hex().notNull(),
   isCollateral: t.boolean().notNull().default(false),
   isDebt: t.boolean().notNull().default(false),
 }));
@@ -63,10 +63,10 @@ export const liquidationRecord = onchainTable("liquidation_record", (t) => ({
  * ─────────────────────────────────────────────────────────────
  */
 export const reserveIndex = onchainTable("reserve_index", (t) => ({
-  id: t.text().primaryKey(), // Format: `${chainId}:${protocol}:${marketId}`
+  id: t.text().primaryKey(), // Format: `${chainId}:${protocol}:${assetAddress}`
   chainId: t.integer().notNull(),
   protocol: t.text().notNull(),
-  marketId: t.hex().notNull(),
+  assetAddress: t.hex().notNull(),
   liquidityIndex: t.bigint().notNull().default(0n),
   variableBorrowIndex: t.bigint().notNull().default(0n),
 }));

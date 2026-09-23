@@ -1,65 +1,48 @@
-import { HermesClient } from "@pythnetwork/hermes-client";
-
-// import { database, marketMetadata } from "@packages/db";
-import { env } from "@packages/core";
-// import { Chains, Chain, env } from "@packages/core";
+import { database, marketMetadata } from "@packages/db";
+import { Chains, type Chain } from "@packages/core";
 
 import type { Address } from "viem";
-import type { Optional } from "@packages/core";
 
-export interface PriceFeed {
+export interface IPriceFeed {
   chainId: number;
-  marketAddress: Address;
-  assetSymbol: string;
-  oracleAddress: Address;
+  chainKey: Chain;
+  symbol: string;
   decimals: number;
-  pythFeedId: Optional<`0x${string}`>;
+  assetAddress: Address;
+  oracleAddress: Address;
 }
-
-const HERMES_URL = env("PYTH_HERMES_URL", "https://hermes.pyth.network");
 
 /**
- * Dynamically resolves Pyth Feed IDs using the official @pythnetwork/hermes-client
- * without hardcoding any 32-byte hashes.
+ * Creates a list of price feeds from the database.
  */
-export async function resolvePriceFeeds() {
-  const hermes = new HermesClient(HERMES_URL, {
-    
-  });
-  // const markets = await database().select().from(marketMetadata);
-  // const pythSymbolToIdMap = new Map<string, `0x${string}`>();
+export async function getPriceFeeds(): Promise<IPriceFeed[]> {
+  const markets = await database().select().from(marketMetadata);
+  const chainIdToKeys = new Map<number, Chain>(Object.values(Chains).map((c) => [c.config.id, c.key]));
 
-  try {
-    const pythFeeds = await hermes.getPriceFeeds({ assetType: "crypto" });
-    const priceUpdates = await hermes.getLatestPriceUpdates(
-      pythFeeds.map((f) => f.id),
-      { parsed: true },
-    );
+  const priceFeeds: IPriceFeed[] = [];
+  const skipped: string[] = [];
 
-    console.log(`Fetched ${pythFeeds.length} Pyth price feeds from Hermes`);
-    console.log(`Fetched ${priceUpdates.binary.data.length} Pyth price updates from Hermes`);
+  for (const market of markets) {
+    const chainKey = chainIdToKeys.get(market.chainId);
+    if (!chainKey) {
+      skipped.push(`[${market.chainId}] ${market.symbol} — unknown chain`);
+      continue;
+    }
 
-    Bun.write("pyth-feeds.json", JSON.stringify(pythFeeds, null, 2));
-    Bun.write("pyth-price-updates.json", JSON.stringify(priceUpdates, null, 2));
-  } catch (err) {
-    console.error("Failed to query Pyth Hermes price feeds:", err);
+    priceFeeds.push({
+      chainId: market.chainId,
+      chainKey,
+      symbol: market.symbol,
+      decimals: market.decimals,
+      assetAddress: market.assetAddress.toLowerCase() as Address,
+      oracleAddress: market.oracleAddress.toLowerCase() as Address,
+    });
   }
 
-  // return markets.map((m): PriceFeed => {
-  //   let cleanSymbol = m.assetSymbol.toUpperCase();
-  //   if (cleanSymbol.startsWith("W") && cleanSymbol.length > 3) {
-  //     cleanSymbol = cleanSymbol.substring(1);
-  //   }
+  if (skipped.length > 0) {
+    console.log(`[Feeds] ⚠ Skipped ${skipped.length} reserves:`);
+    for (const s of skipped) console.log(`       ${s}`);
+  }
 
-  //   return {
-  //     chainId: m.chainId,
-  //     marketAddress: m.marketId.toLowerCase() as Address,
-  //     assetSymbol: m.assetSymbol,
-  //     oracleAddress: m.oracleAddress.toLowerCase() as Address,
-  //     decimals: m.decimals,
-  //     pythFeedId: pythSymbolToIdMap.get(cleanSymbol) || pythSymbolToIdMap.get(m.assetSymbol.toUpperCase()),
-  //   };
-  // });
+  return priceFeeds;
 }
-
-resolvePriceFeeds();

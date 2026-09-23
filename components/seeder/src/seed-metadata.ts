@@ -13,25 +13,31 @@ try {
     const publicClient = createPublicClient({ chain: chain.config, transport: http() });
 
     // 1. Fetch all listed reserve tokens dynamically
-    const rawReserves = await publicClient.readContract({
+    const reserves = await publicClient.readContract({
       address: chain.addresses.poolDataProvider,
       abi: AavePoolDataProviderAbi,
       functionName: "getAllReservesTokens",
     });
 
-    console.log(`Discovered ${rawReserves.length} reserve markets.`);
+    console.log(`Discovered ${reserves.length} reserve markets.`);
 
-    if (rawReserves.length === 0) {
+    if (reserves.length === 0) {
       console.warn(`No reserves returned for ${chain.config.name}. Skipping...`);
       continue;
     }
 
     // 2. Batch multicall for each reserve: config + oracle source
-    const reserveCalls = rawReserves.flatMap((reserve) => [
+    const reserveCalls = reserves.flatMap((reserve) => [
       {
         address: chain.addresses.poolDataProvider,
         abi: AavePoolDataProviderAbi,
         functionName: "getReserveConfigurationData" as const,
+        args: [reserve.tokenAddress] as const,
+      },
+      {
+        address: chain.addresses.poolDataProvider,
+        abi: AavePoolDataProviderAbi,
+        functionName: "getReserveTokensAddresses" as const,
         args: [reserve.tokenAddress] as const,
       },
       {
@@ -49,12 +55,12 @@ try {
     });
 
     // 3. Process and write market metadata to PostgreSQL
-    for (let i = 0; i < rawReserves.length; i++) {
-      const reserve = rawReserves[i];
+    for (let i = 0; i < reserves.length; i++) {
+      const reserve = reserves[i];
       if (!reserve) throw new Error(`Reserve data missing for index ${i} on chain ${chain.config.name}`);
 
       const tokenAddress = reserve.tokenAddress;
-      const configData = multicallResults[i * 2] as [
+      const [decimals, , liquidationThreshold, liquidationBonus, , usageAsCollateralEnabled, , , isActive, isFrozen] = multicallResults[i * 3] as [
         bigint, // 0. decimals
         bigint, // 1. ltv
         bigint, // 2. liquidationThreshold
@@ -67,7 +73,13 @@ try {
         boolean, // 9. isFrozen
       ];
 
-      const oracleAddress = multicallResults[i * 2 + 1] as Address;
+      const [aTokenAddress, , variableDebtTokenAddress] = multicallResults[i * 3 + 1] as [
+        Address, // aTokenAddress
+        Address, // stableDebtTokenAddress
+        Address, // variableDebtTokenAddress
+      ];
+
+      const oracleAddress = multicallResults[i * 3 + 2] as Address;
 
       const reserveId = `${chain.config.id}:${PROTOCOL_AAVE_V3}:${tokenAddress}`;
 
@@ -77,31 +89,33 @@ try {
           id: reserveId,
           chainId: chain.config.id,
           protocol: PROTOCOL_AAVE_V3,
-          marketId: tokenAddress,
-          assetSymbol: reserve.symbol,
-          decimals: Number(configData[0]),
+          assetAddress: tokenAddress,
+          aTokenAddress: aTokenAddress,
+          variableDebtTokenAddress: variableDebtTokenAddress,
+          symbol: reserve.symbol,
+          decimals: Number(decimals),
           oracleAddress,
-          liquidationThresholdBps: Number(configData[2]),
-          liquidationBonusBps: Number(configData[3]),
-          usageAsCollateralEnabled: configData[5],
-          isActive: configData[8],
-          isFrozen: configData[9],
+          liquidationThresholdBps: Number(liquidationThreshold),
+          liquidationBonusBps: Number(liquidationBonus),
+          usageAsCollateralEnabled: usageAsCollateralEnabled,
+          isActive: isActive,
+          isFrozen: isFrozen,
         })
         .onConflictDoUpdate({
           target: marketMetadata.id,
           set: {
-            assetSymbol: reserve.symbol,
-            decimals: Number(configData[0]),
+            symbol: reserve.symbol,
+            decimals: Number(decimals),
             oracleAddress,
-            liquidationThresholdBps: Number(configData[2]),
-            liquidationBonusBps: Number(configData[3]),
-            usageAsCollateralEnabled: configData[5],
-            isActive: configData[8],
-            isFrozen: configData[9],
+            liquidationThresholdBps: Number(liquidationThreshold),
+            liquidationBonusBps: Number(liquidationBonus),
+            usageAsCollateralEnabled: usageAsCollateralEnabled,
+            isActive: isActive,
+            isFrozen: isFrozen,
           },
         });
 
-      console.log(`  ✓ ${reserve.symbol} (${tokenAddress})`);
+      console.log(`  ✓ ${reserve.symbol} (Token Address: ${tokenAddress})`);
     }
 
     // 4. Batch query E-Mode Categories (1 through 5)

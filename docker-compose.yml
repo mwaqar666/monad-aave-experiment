@@ -6,7 +6,7 @@ services:
   postgres:
     image: postgres
     container_name: postgres
-    restart: unless-stopped
+    restart: no
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -17,10 +17,10 @@ services:
       - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
+      timeout: 15s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     networks:
       - monad-net
 
@@ -32,94 +32,22 @@ services:
   redis:
     image: redis
     container_name: redis
-    restart: unless-stopped
+    restart: no
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 5s
+      timeout: 15s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     networks:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 3: Wormhole Spy
-  # Connects to the mainnet Wormhole peer-to-peer network to listen
-  # for Verifiable Action Approvals (VAAs) published by Guardians.
-  # ─────────────────────────────────────────────────────────────
-  wormhole-spy:
-    image: ghcr.io/wormhole-foundation/guardiand:latest
-    container_name: wormhole-spy
-    restart: unless-stopped
-    entrypoint: /guardiand
-    environment:
-      - HOME=/data
-    command:
-      - spy
-      - --nodeKey
-      - /node.key
-      - --spyRPC
-      - "[::]:7073"
-      - --env
-      - mainnet
-    ports:
-      - "7073:7073"
-    volumes:
-      - spy_data:/data
-      - ./tools/scripts/healthchecks:/tools/scripts/healthchecks:ro
-    healthcheck:
-      test: ["CMD-SHELL", "bash /tools/scripts/healthchecks/spy.sh 7073"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    networks:
-      - monad-net
-
-  # ─────────────────────────────────────────────────────────────
-  # SERVICE 4: Hermes Server
-  # Connects to the local Spy's gRPC stream, pulls data from a public
-  # RPC, and exposes standard REST/SSE endpoints.
-  # ─────────────────────────────────────────────────────────────
-  hermes:
-    build:
-      context: ./vendor/pyth-crosschain
-      dockerfile: apps/hermes/server/Dockerfile
-    container_name: hermes
-    restart: unless-stopped
-    depends_on:
-      wormhole-spy:
-        condition: service_healthy
-    entrypoint: "hermes"
-    command:
-      - run
-      - --wormhole-spy-rpc-addr
-      - http://wormhole-spy:7073
-      - --pythnet-http-addr
-      - https://pythnet.rpcpool.com
-      - --pythnet-ws-addr
-      - wss://pythnet.rpcpool.com
-      - --rpc-listen-addr
-      - 0.0.0.0:33999
-    ports:
-      - "33999:33999"
-    volumes:
-      - ./tools/scripts/healthchecks:/tools/scripts/healthchecks:ro
-    healthcheck:
-      test: ["CMD-SHELL", "bash /tools/scripts/healthchecks/hermes.sh 33999"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    networks:
-      - monad-net
-
-  # ─────────────────────────────────────────────────────────────
-  # SERVICE 5: Seeder
+  # SERVICE 3: Seeder
   # Seeds the database with historical events from the chains.
   # ─────────────────────────────────────────────────────────────
   seeder:
@@ -127,8 +55,14 @@ services:
       context: .
       dockerfile: components/seeder/Dockerfile
     container_name: seeder
-    restart: unless-stopped
+    restart: no
     environment:
+      WS_URL_MAINNET: ${WS_URL_MAINNET}
+      WS_URL_POLYGON: ${WS_URL_POLYGON}
+      WS_URL_BASE: ${WS_URL_BASE}
+      WS_URL_MONAD: ${WS_URL_MONAD}
+      WS_URL_ARBITRUM: ${WS_URL_ARBITRUM}
+      WS_URL_OPTIMISM: ${WS_URL_OPTIMISM}
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
       RPC_URL_BASE: ${RPC_URL_BASE}
@@ -146,7 +80,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 6: Indexer
+  # SERVICE 4: Indexer
   # Listens to Aave events on Monad and writes to PostgreSQL.
   # ─────────────────────────────────────────────────────────────
   indexer:
@@ -154,8 +88,14 @@ services:
       context: .
       dockerfile: components/indexer/Dockerfile
     container_name: indexer
-    restart: unless-stopped
+    restart: no
     environment:
+      WS_URL_MAINNET: ${WS_URL_MAINNET}
+      WS_URL_POLYGON: ${WS_URL_POLYGON}
+      WS_URL_BASE: ${WS_URL_BASE}
+      WS_URL_MONAD: ${WS_URL_MONAD}
+      WS_URL_ARBITRUM: ${WS_URL_ARBITRUM}
+      WS_URL_OPTIMISM: ${WS_URL_OPTIMISM}
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
       RPC_URL_BASE: ${RPC_URL_BASE}
@@ -175,7 +115,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 7: Watcher
+  # SERVICE 5: Watcher
   # Reads PostgreSQL, calculates health factors, pushes to Redis.
   # ─────────────────────────────────────────────────────────────
   watcher:
@@ -183,8 +123,14 @@ services:
       context: .
       dockerfile: components/watcher/Dockerfile
     container_name: watcher
-    restart: unless-stopped
+    restart: no
     environment:
+      WS_URL_MAINNET: ${WS_URL_MAINNET}
+      WS_URL_POLYGON: ${WS_URL_POLYGON}
+      WS_URL_BASE: ${WS_URL_BASE}
+      WS_URL_MONAD: ${WS_URL_MONAD}
+      WS_URL_ARBITRUM: ${WS_URL_ARBITRUM}
+      WS_URL_OPTIMISM: ${WS_URL_OPTIMISM}
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
       RPC_URL_BASE: ${RPC_URL_BASE}
@@ -207,7 +153,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 8: Simulator (Optional — enable after we build it)
+  # SERVICE 6: Simulator (Optional — enable after we build it)
   # Pulls from Redis, runs Anvil fork simulations.
   # ─────────────────────────────────────────────────────────────
   simulator:
@@ -215,7 +161,7 @@ services:
       context: .
       dockerfile: components/simulator/Dockerfile
     container_name: simulator
-    restart: unless-stopped
+    restart: no
     environment:
       RPC_URL_MAINNET: ${RPC_URL_MAINNET}
       RPC_URL_POLYGON: ${RPC_URL_POLYGON}
@@ -233,7 +179,7 @@ services:
       - monad-net
 
   # ─────────────────────────────────────────────────────────────
-  # SERVICE 9: Executor (Optional — enable after we build it)
+  # SERVICE 7: Executor (Optional — enable after we build it)
   # Pulls approved opportunities from Redis, submits transactions.
   # ─────────────────────────────────────────────────────────────
   # executor:
@@ -256,8 +202,6 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
-    driver: local
-  spy_data:
     driver: local
 
 networks:
